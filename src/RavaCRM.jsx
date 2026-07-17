@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { createClient } from "@supabase/supabase-js";
 import * as XLSX from "xlsx";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from "recharts";
+import { IDS_ACTIVOS, IDS_TODOS, COLOR_POR_PROFESIONAL, PROFESIONALES_ACTIVOS } from "./lib/profesionales.js";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -37,10 +38,20 @@ const VALORES_PROF = {
 };
 // Ingreso por regalo: $9.233 por sesión (arancel MEDIFE)
 const ARANCEL_REGALO = 9233;
-const PROFS_LIST = ["ISOLINA","JUAN CRUZ","FRANCISCO","PAULA","DANIELA","MILAGROS"];
-const PROF_COLORS = { ISOLINA:"#6366f1","JUAN CRUZ":"#10b981",FRANCISCO:"#f59e0b",PAULA:"#ec4899",DANIELA:"#64748b",DAVID:"#06b6d4",MILAGROS:"#8b5cf6" };
 const PRESTACIONES = Object.keys(ARANCELES_REALES);
-const MES_LABELS = { "2026-03":"Marzo 2026","2026-02":"Febrero 2026","2026-01":"Enero 2026","2025-12":"Dic 2025","2025-11":"Nov 2025" };
+const NOMBRES_MES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+// Antes era un objeto fijo con 5 meses hardcodeados (se rompía apenas pasaba el tiempo).
+// Ahora formatea cualquier "YYYY-MM" válido; si el valor está corrupto, devuelve undefined
+// y el "||m" de cada lugar que lo usa cae al string crudo (para poder detectarlo a simple vista).
+const MES_LABELS = new Proxy({}, {
+  get: (_, key) => {
+    if (typeof key !== "string") return undefined;
+    const m = key.match(/^(\d{4})-(\d{2})$/);
+    if (!m) return undefined;
+    const nombre = NOMBRES_MES[parseInt(m[2], 10) - 1];
+    return nombre ? `${nombre} ${m[1]}` : undefined;
+  }
+});
 const CATEGORIAS_GASTO = ["Expensas","Luz","Insumos","Limpieza","Sueldo Susana","Honorarios Contabilidad","Alquiler","Otros"];
 const PIE_COLORS = ["#6366f1","#ec4899","#10b981","#f59e0b","#06b6d4","#a78bfa","#f43f5e","#34d399"];
 
@@ -66,7 +77,7 @@ const GASTOS_INIT = [
 function calcResumen(registros, mes) {
   const filtered = mes ? registros.filter(r=>r.mes===mes) : registros;
   const res = {};
-  [...PROFS_LIST,"DAVID"].forEach(p=>{ res[p]={osde:0,medife:0,particular:0,regalo:0,prest:{}}; });
+  IDS_TODOS.forEach(p=>{ res[p]={osde:0,medife:0,particular:0,regalo:0,prest:{}}; });
   filtered.forEach(r=>{
     if(!res[r.prof]) res[r.prof]={osde:0,medife:0,particular:0,regalo:0,prest:{}};
     res[r.prof].osde      += r.osde||0;
@@ -93,16 +104,18 @@ function calcHonorario(prof, d, precios=null) {
   return (d.osde+d.medife)*prepaga + d.particular*particular + (d.regalo||0)*regalo;
 }
 
-function calcIngresoBruto(registros, mes) {
+function calcIngresoBruto(registros, mes, precios=null) {
+  const aranceles = getAranceles(precios);
   return registros.filter(r=>!mes||r.mes===mes).reduce((sum,r)=>{
-    const ar=ARANCELES_REALES[r.prestacion]; if(!ar) return sum;
+    const ar=aranceles[r.prestacion]; if(!ar) return sum;
     return sum+(r.osde||0)*(ar.OSDE||0)+(r.medife||0)*(ar.MEDIFE||0)+(r.particular||0)*(ar.PARTICULAR||0);
   },0);
 }
 
-function calcIngresoPorOS(registros, mes) {
+function calcIngresoPorOS(registros, mes, precios=null) {
+  const aranceles = getAranceles(precios);
   return registros.filter(r=>!mes||r.mes===mes).reduce((acc,r)=>{
-    const ar=ARANCELES_REALES[r.prestacion]; if(!ar) return acc;
+    const ar=aranceles[r.prestacion]; if(!ar) return acc;
     acc.OSDE      += (r.osde||0)*(ar.OSDE||0);
     acc.MEDIFE    += (r.medife||0)*(ar.MEDIFE||0);
     acc.PARTICULAR+= (r.particular||0)*(ar.PARTICULAR||0);
@@ -110,10 +123,11 @@ function calcIngresoPorOS(registros, mes) {
   },{OSDE:0,MEDIFE:0,PARTICULAR:0});
 }
 
-function calcIngresoPorPrestacion(registros, mes) {
+function calcIngresoPorPrestacion(registros, mes, precios=null) {
+  const aranceles = getAranceles(precios);
   const acc={};
   registros.filter(r=>!mes||r.mes===mes).forEach(r=>{
-    const ar=ARANCELES_REALES[r.prestacion]; if(!ar) return;
+    const ar=aranceles[r.prestacion]; if(!ar) return;
     if(!acc[r.prestacion]) acc[r.prestacion]={OSDE:0,MEDIFE:0,PARTICULAR:0,total:0};
     acc[r.prestacion].OSDE      += (r.osde||0)*(ar.OSDE||0);
     acc[r.prestacion].MEDIFE    += (r.medife||0)*(ar.MEDIFE||0);
@@ -875,7 +889,7 @@ function ViewCobrosOSDE({registros}) {
 }
 
 // ─── VISTA: GASTOS Y RENTABILIDAD ─────────────────────────────────────────────
-function ViewRentabilidad({registros}) {
+function ViewRentabilidad({registros,precios}) {
   const [gastos,setGastos] = useState(GASTOS_INIT);
   const [mes,setMes] = useState(getMesActual());
   const [showForm,setShowForm] = useState(false);
@@ -886,11 +900,11 @@ function ViewRentabilidad({registros}) {
 
   const gastosMes  = gastos.filter(g=>g.mes===mes);
   const totalGastos= gastosMes.reduce((s,g)=>s+(g.monto||0),0);
-  const bruto      = calcIngresoBruto(registros,mes);
+  const bruto      = calcIngresoBruto(registros,mes,precios);
   const resumen    = calcResumen(registros,mes);
-  const totalHon   = [...PROFS_LIST,"DAVID"].reduce((s,p)=>{
+  const totalHon   = IDS_TODOS.reduce((s,p)=>{
     const d=resumen[p]||{osde:0,medife:0,particular:0,regalo:0};
-    return s+calcHonorario(p,d);
+    return s+calcHonorario(p,d,precios);
   },0);
   const totalCostos   = totalGastos+totalHon;
   const rentabilidad  = bruto-totalCostos;
@@ -914,10 +928,10 @@ function ViewRentabilidad({registros}) {
 
   // Tendencia rentabilidad
   const tendencia = mesesDisp.slice(0,6).reverse().map(m=>{
-    const b = calcIngresoBruto(registros,m);
+    const b = calcIngresoBruto(registros,m,precios);
     const gm = gastos.filter(g=>g.mes===m).reduce((s,g)=>s+g.monto,0);
     const res2 = calcResumen(registros,m);
-    const hon = [...PROFS_LIST,"DAVID"].reduce((s,p)=>{const d=res2[p]||{osde:0,medife:0,particular:0,regalo:0};return s+calcHonorario(p,d);},0);
+    const hon = IDS_TODOS.reduce((s,p)=>{const d=res2[p]||{osde:0,medife:0,particular:0,regalo:0};return s+calcHonorario(p,d,precios);},0);
     return {mes:MES_LABELS[m]||m, Ingresos:Math.round(b), Costos:Math.round(gm+hon), Rentabilidad:Math.round(b-gm-hon)};
   });
 
@@ -1041,7 +1055,7 @@ function ViewRentabilidad({registros}) {
 }
 
 // ─── VISTA: LIQUIDACIÓN ───────────────────────────────────────────────────────
-function ViewLiquidacion({registros,setRegistros}) {
+function ViewLiquidacion({registros,setRegistros,precios}) {
   const mesActual = getMesActual();
   const mesesDisp = [...new Set([...registros.map(r=>r.mes),mesActual])].sort().reverse();
   const [mes,setMes] = useState(mesActual);
@@ -1054,21 +1068,22 @@ function ViewLiquidacion({registros,setRegistros}) {
   const fileRef = useRef();
 
   const resumen = useMemo(()=>calcResumen(registros,mes),[registros,mes]);
-  const bruto   = useMemo(()=>calcIngresoBruto(registros,mes),[registros,mes]);
+  const bruto   = useMemo(()=>calcIngresoBruto(registros,mes,precios),[registros,mes,precios]);
 
   const getVal=(prof,campo)=>{const k=`${mes}_${prof}_${campo}`;return overrides[k]!==undefined?overrides[k]:(resumen[prof]?.[campo]||0);};
   const setOv=(prof,campo,v)=>setOverrides(p=>({...p,[`${mes}_${prof}_${campo}`]:parseInt(v)||0}));
 
-  const profRows=[...PROFS_LIST,...(resumen["DAVID"]?.osde>0||resumen["DAVID"]?.medife>0?["DAVID"]:[])];
+  const tieneActividad=(id)=>{const d=resumen[id]; return !!d&&(d.osde>0||d.medife>0||d.particular>0||d.regalo>0);};
+  const profRows=[...IDS_ACTIVOS, ...IDS_TODOS.filter(id=>!IDS_ACTIVOS.includes(id)&&tieneActividad(id))];
   let totalHon=0;
   const profData=profRows.map(prof=>{
     const v=VALORES_PROF[prof];
     const isDuena=v?.esDuena,isPaula=v?.soloRPG;
     const osde=getVal(prof,"osde"),medife=getVal(prof,"medife"),particular=getVal(prof,"particular");
     const reg=regalos[`${mes}_${prof}`]||getVal(prof,"regalo");
-    const hon=isDuena?0:calcHonorario(prof,{osde,medife,particular,regalo:reg});
+    const hon=isDuena?0:calcHonorario(prof,{osde,medife,particular,regalo:reg},precios);
     if(!isDuena) totalHon+=hon;
-    return {prof,osde,medife,prepaga:osde+medife,particular,reg,hon,isDuena,isPaula,color:PROF_COLORS[prof]||"#fff"};
+    return {prof,osde,medife,prepaga:osde+medife,particular,reg,hon,isDuena,isPaula,color:COLOR_POR_PROFESIONAL[prof]||"#fff"};
   });
 
   function handleFile(e) {
@@ -1214,7 +1229,7 @@ function ViewLiquidacion({registros,setRegistros}) {
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
               <div><label style={S.label}>Profesional</label>
                 <select style={S.input} value={formDia.prof} onChange={e=>setFormDia(f=>({...f,prof:e.target.value}))}>
-                  {[...PROFS_LIST,"DAVID"].map(p=><option key={p}>{p}</option>)}
+                  {IDS_ACTIVOS.map(p=><option key={p}>{p}</option>)}
                 </select>
               </div>
               <div><label style={S.label}>Prestación</label>
@@ -1241,7 +1256,7 @@ function ViewLiquidacion({registros,setRegistros}) {
 }
 
 // ─── VISTA: DASHBOARD ─────────────────────────────────────────────────────────
-function ViewDashboard({registros}) {
+function ViewDashboard({registros, precios}) {
   const mesesDisp = [...new Set(registros.map(r=>r.mes))].sort().reverse();
   if(!mesesDisp.includes(getMesActual())) mesesDisp.unshift(getMesActual());
   const [mes, setMes] = useState(getMesActual());
@@ -1252,21 +1267,21 @@ function ViewDashboard({registros}) {
 
   const res    = useMemo(()=>calcResumen(registros,mes),[registros,mes]);
   const resAnt = useMemo(()=>mesAnt?calcResumen(registros,mesAnt):{},[registros,mesAnt]);
-  const bruto    = useMemo(()=>calcIngresoBruto(registros,mes),[registros,mes]);
-  const brutoAnt = useMemo(()=>mesAnt?calcIngresoBruto(registros,mesAnt):0,[registros,mesAnt]);
-  const porOS    = useMemo(()=>calcIngresoPorOS(registros,mes),[registros,mes]);
-  const porOSAnt = useMemo(()=>mesAnt?calcIngresoPorOS(registros,mesAnt):{OSDE:0,MEDIFE:0,PARTICULAR:0},[registros,mesAnt]);
-  const porPrest = useMemo(()=>calcIngresoPorPrestacion(registros,mes),[registros,mes]);
+  const bruto    = useMemo(()=>calcIngresoBruto(registros,mes,precios),[registros,mes,precios]);
+  const brutoAnt = useMemo(()=>mesAnt?calcIngresoBruto(registros,mesAnt,precios):0,[registros,mesAnt,precios]);
+  const porOS    = useMemo(()=>calcIngresoPorOS(registros,mes,precios),[registros,mes,precios]);
+  const porOSAnt = useMemo(()=>mesAnt?calcIngresoPorOS(registros,mesAnt,precios):{OSDE:0,MEDIFE:0,PARTICULAR:0},[registros,mesAnt,precios]);
+  const porPrest = useMemo(()=>calcIngresoPorPrestacion(registros,mes,precios),[registros,mes,precios]);
 
   let totalHon=0, totalHonAnt=0;
-  const profStats=[...PROFS_LIST,"DAVID"].map(prof=>{
+  const profStats=IDS_TODOS.map(prof=>{
     const d  = res[prof]||{osde:0,medife:0,particular:0,regalo:0};
     const da = resAnt[prof]||{osde:0,medife:0,particular:0,regalo:0};
-    const hon=calcHonorario(prof,d), honA=calcHonorario(prof,da);
+    const hon=calcHonorario(prof,d,precios), honA=calcHonorario(prof,da,precios);
     totalHon+=hon; totalHonAnt+=honA;
     const total=d.osde+d.medife+d.particular+(d.regalo||0);
     const desglose={osde:d.osde,medife:d.medife,particular:d.particular,regalo:d.regalo||0};
-    return {prof,total,hon,color:PROF_COLORS[prof]||"#fff",desglose};
+    return {prof,total,hon,color:COLOR_POR_PROFESIONAL[prof]||"#fff",desglose};
   }).filter(p=>p.total>0||p.hon>0);
 
   const barPrestData = Object.entries(porPrest).map(([prest,d])=>({
@@ -1637,7 +1652,6 @@ function ViewPrecios({ onPreciosUpdate }) {
     const clavesEditadas = cambios.map(([c]) => c);
     await supabase.from("crm_precios").delete().eq("mes", mes).in("clave", clavesEditadas);
     const filas = cambios.map(([clave, valor]) => ({
-      id: `${mes}_${clave}`,
       mes, clave,
       valor: parseFloat(valor) || 0,
       descripcion: precios?.[clave]?.descripcion || clave,
@@ -1667,15 +1681,11 @@ function ViewPrecios({ onPreciosUpdate }) {
     transition: "border-color 0.15s, background 0.15s"
   });
 
-  const PROFS = [
-    { key: "isolina",   label: "ISOLINA",    soloRPG: false },
-    { key: "david",     label: "DAVID",      soloRPG: false },
-    { key: "juancruz",  label: "JUAN CRUZ",  soloRPG: false },
-    { key: "francisco", label: "FRANCISCO",  soloRPG: false },
-    { key: "paula",     label: "PAULA",      soloRPG: true  },
-    { key: "daniela",   label: "DANIELA",    soloRPG: false },
-    { key: "milagros",  label: "MILAGROS",   soloRPG: false },
-  ];
+  const PROFS = PROFESIONALES_ACTIVOS.map(p => ({
+    key: p.id.toLowerCase().replace(" ", ""),
+    label: p.id,
+    soloRPG: !!p.soloRPG,
+  }));
 
   return (
     <div>
@@ -2765,7 +2775,7 @@ function ViewCobrosParticular() {
               <div><label style={S.label}>Fecha</label><input type="date" style={S.input} value={form.fecha} onChange={e=>setForm(f=>({...f,fecha:e.target.value}))}/></div>
               <div><label style={S.label}>Profesional</label>
                 <select style={S.input} value={form.prof} onChange={e=>setForm(f=>({...f,prof:e.target.value}))}>
-                  {[...PROFS_LIST,"DAVID"].map(p=><option key={p}>{p}</option>)}
+                  {IDS_ACTIVOS.map(p=><option key={p}>{p}</option>)}
                 </select>
               </div>
               <div style={{gridColumn:"1/-1"}}><label style={S.label}>Descripción</label><input style={S.input} value={form.descripcion} onChange={e=>setForm(f=>({...f,descripcion:e.target.value}))} placeholder="ej: 3 sesiones RPG — Paciente García"/></div>
@@ -2813,7 +2823,7 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
 
   // Stats por profesional (para la tabla resumen)
   // Dedup AUTO+MANUAL: si un día tiene ambos, usar solo AUTO para los totales
-  const statsPorProf = [...PROFS_LIST,"DAVID","CHEQUEAR"].map(prof => {
+  const statsPorProf = [...IDS_TODOS,"CHEQUEAR"].map(prof => {
     const regs = regMes.filter(r => r.prof===prof);
     const diasProf = {};
     regs.forEach(r => {
@@ -2862,7 +2872,7 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
     osde:a.osde+d.osde, medife:a.medife+d.medife, particular:a.particular+d.particular, regalo:a.regalo+d.regalo
   }),{osde:0,medife:0,particular:0,regalo:0});
 
-  const colorSel = PROF_COLORS[profSel]||"#6366f1";
+  const colorSel = COLOR_POR_PROFESIONAL[profSel]||"#6366f1";
 
   async function eliminar(id) {
     if(!confirm("¿Eliminar este registro?")) return;
@@ -2972,11 +2982,11 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
                 <tr key={p.prof}
                   onClick={()=>setProfSel(profSel===p.prof?null:p.prof)}
                   style={{borderBottom:"1px solid #f8fafc",cursor:"pointer",
-                    background:profSel===p.prof?(PROF_COLORS[p.prof]||"#6366f1")+"18":i%2===0?"white":"#fafafa"}}>
+                    background:profSel===p.prof?(COLOR_POR_PROFESIONAL[p.prof]||"#6366f1")+"18":i%2===0?"white":"#fafafa"}}>
                   <td style={{padding:"10px 12px"}}>
                     <span style={{display:"inline-flex",alignItems:"center",gap:8}}>
-                      <span style={{width:10,height:10,borderRadius:"50%",background:PROF_COLORS[p.prof]||"#94a3b8",display:"inline-block"}}/>
-                      <strong style={{color:profSel===p.prof?(PROF_COLORS[p.prof]||"#6366f1"):"#1e293b"}}>{p.prof}</strong>
+                      <span style={{width:10,height:10,borderRadius:"50%",background:COLOR_POR_PROFESIONAL[p.prof]||"#94a3b8",display:"inline-block"}}/>
+                      <strong style={{color:profSel===p.prof?(COLOR_POR_PROFESIONAL[p.prof]||"#6366f1"):"#1e293b"}}>{p.prof}</strong>
                       <span style={{fontSize:10,color:"#94a3b8"}}>{profSel===p.prof?"▲":"▼"}</span>
                     </span>
                   </td>
@@ -3152,7 +3162,7 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
               <div><label style={S.label}>Profesional</label>
                 <select style={S.input} value={formAdd.prof} onChange={e=>setFormAdd(f=>({...f,prof:e.target.value}))}>
-                  {[...PROFS_LIST,"DAVID"].map(p=><option key={p}>{p}</option>)}
+                  {IDS_ACTIVOS.map(p=><option key={p}>{p}</option>)}
                 </select>
               </div>
               <div><label style={S.label}>Prestación</label>
@@ -3272,7 +3282,7 @@ export default function RavaCRM({ user, onLogout }) {
           ))}
           <div style={{flex:1}}/>
           <div style={{background:"#ffffff",borderRadius:10,padding:"12px 14px",border:"1px solid #dbeafe"}}>
-            <div style={{color:"#cbd5e1",fontSize:9,letterSpacing:1,marginBottom:5}}>REGISTROS {mesActual.slice(5)==="03"?"MARZO":"MES"}</div>
+            <div style={{color:"#cbd5e1",fontSize:9,letterSpacing:1,marginBottom:5}}>REGISTROS {(MES_LABELS[mesActual]||mesActual).split(" ")[0].toUpperCase()}</div>
             <div style={{color:"#6366f1",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:22}}>
               {cargando ? "..." : registrosMesActual.length}
             </div>

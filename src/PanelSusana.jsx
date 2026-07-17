@@ -4,6 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts";
+import { IDS_ACTIVOS, IDS_TODOS, COLOR_POR_PROFESIONAL } from "./lib/profesionales.js";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -15,17 +16,11 @@ const FICHAS_URL = "https://svwifjhdxuytjenkqulz.supabase.co";
 const FICHAS_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2d2lmamhkeHV5dGplbmtxdWx6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjkwOTI0NCwiZXhwIjoyMDg4NDg1MjQ0fQ.fTzeTBdSFolVFnKKqiG2mGoEHnxElZqneAl77-LsApQ";
 const fichasSupa = createClient(FICHAS_URL, FICHAS_KEY);
 
-const PROFESIONALES = ["ISOLINA","DAVID","JUAN CRUZ","PAULA","FRANCISCO","DANIELA","MILAGROS","CHEQUEAR"];
-const COLORES = {
-  ISOLINA:    "#6366f1",
-  DAVID:      "#0ea5e9",
-  "JUAN CRUZ":"#10b981",
-  PAULA:      "#ec4899",
-  FRANCISCO:  "#f59e0b",
-  DANIELA:    "#8b5cf6",
-  MILAGROS:   "#14b8a6",
-  CHEQUEAR:   "#94a3b8",
-};
+// Antes esta lista y sus colores estaban duplicados acá (y desincronizados
+// de RavaCRM.jsx — David tenía un color distinto en cada panel). Ahora
+// viven en un solo lugar: src/lib/profesionales.js
+const PROFESIONALES = [...IDS_TODOS, "CHEQUEAR"];
+const COLORES = { ...COLOR_POR_PROFESIONAL, CHEQUEAR: "#94a3b8" };
 const PIE_COLORS = ["#6366f1","#0ea5e9","#10b981","#ec4899","#f59e0b","#8b5cf6"];
 
 function mesActual() {
@@ -927,7 +922,7 @@ export default function PanelSusana({ user, onLogout }) {
                 <label style={{ display:"block", fontSize:"0.75rem", fontWeight:700, color:"#64748b", marginBottom:"0.4rem", textTransform:"uppercase", letterSpacing:"0.05em" }}>Profesional</label>
                 <select value={formRegalo.prof} onChange={e=>setFormRegalo(f=>({...f,prof:e.target.value}))}
                   style={{ width:"100%", padding:"0.6rem 0.75rem", borderRadius:"8px", border:"1px solid #e2e8f0", fontSize:"0.9rem", background:"#f8fafc" }}>
-                  {["ISOLINA","DAVID","JUAN CRUZ","PAULA","FRANCISCO","DANIELA"].map(p=>(
+                  {IDS_ACTIVOS.map(p=>(
                     <option key={p} value={p}>{p}</option>
                   ))}
                 </select>
