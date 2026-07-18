@@ -39,6 +39,18 @@ const VALORES_PROF = {
 // Ingreso por regalo: $9.233 por sesión (arancel MEDIFE)
 const ARANCEL_REGALO = 9233;
 const PRESTACIONES = Object.keys(ARANCELES_REALES);
+
+// Registros sincronizados desde Fichas ("FICHAS_AUTO"/"FICHAS_REGALO") o cargados
+// desde Control Diario ("CONTROL DIARIO") traen cantidad de sesiones pero no el tipo
+// de prestación (FKT/RPG/DRENAJE) por fila. Sin esto, calcIngresoBruto/PorOS/PorPrestacion
+// no encuentran arancel y esas filas suman $0 aunque representen atención real.
+// Se infiere la especialidad por profesional (Daniela es aproximado: también hace
+// Osteopatía/RPG, pero no se puede distinguir por fila — se usa Drenaje, su tipo más frecuente).
+const ESPECIALIDAD_DEFAULT = { PAULA: "RPG", DANIELA: "DRENAJE" };
+function prestacionEfectiva(prof, prestacion, aranceles) {
+  if (aranceles[prestacion]) return prestacion;
+  return ESPECIALIDAD_DEFAULT[prof] || "FKT";
+}
 const NOMBRES_MES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 // Antes era un objeto fijo con 5 meses hardcodeados (se rompía apenas pasaba el tiempo).
 // Ahora formatea cualquier "YYYY-MM" válido; si el valor está corrupto, devuelve undefined
@@ -107,7 +119,7 @@ function calcHonorario(prof, d, precios=null) {
 function calcIngresoBruto(registros, mes, precios=null) {
   const aranceles = getAranceles(precios);
   return registros.filter(r=>!mes||r.mes===mes).reduce((sum,r)=>{
-    const ar=aranceles[r.prestacion]; if(!ar) return sum;
+    const ar=aranceles[prestacionEfectiva(r.prof,r.prestacion,aranceles)];
     return sum+(r.osde||0)*(ar.OSDE||0)+(r.medife||0)*(ar.MEDIFE||0)+(r.particular||0)*(ar.PARTICULAR||0);
   },0);
 }
@@ -115,7 +127,7 @@ function calcIngresoBruto(registros, mes, precios=null) {
 function calcIngresoPorOS(registros, mes, precios=null) {
   const aranceles = getAranceles(precios);
   return registros.filter(r=>!mes||r.mes===mes).reduce((acc,r)=>{
-    const ar=aranceles[r.prestacion]; if(!ar) return acc;
+    const ar=aranceles[prestacionEfectiva(r.prof,r.prestacion,aranceles)];
     acc.OSDE      += (r.osde||0)*(ar.OSDE||0);
     acc.MEDIFE    += (r.medife||0)*(ar.MEDIFE||0);
     acc.PARTICULAR+= (r.particular||0)*(ar.PARTICULAR||0);
@@ -127,12 +139,13 @@ function calcIngresoPorPrestacion(registros, mes, precios=null) {
   const aranceles = getAranceles(precios);
   const acc={};
   registros.filter(r=>!mes||r.mes===mes).forEach(r=>{
-    const ar=aranceles[r.prestacion]; if(!ar) return;
-    if(!acc[r.prestacion]) acc[r.prestacion]={OSDE:0,MEDIFE:0,PARTICULAR:0,total:0};
-    acc[r.prestacion].OSDE      += (r.osde||0)*(ar.OSDE||0);
-    acc[r.prestacion].MEDIFE    += (r.medife||0)*(ar.MEDIFE||0);
-    acc[r.prestacion].PARTICULAR+= (r.particular||0)*(ar.PARTICULAR||0);
-    acc[r.prestacion].total     += (r.osde||0)*(ar.OSDE||0)+(r.medife||0)*(ar.MEDIFE||0)+(r.particular||0)*(ar.PARTICULAR||0);
+    const prestEf=prestacionEfectiva(r.prof,r.prestacion,aranceles);
+    const ar=aranceles[prestEf];
+    if(!acc[prestEf]) acc[prestEf]={OSDE:0,MEDIFE:0,PARTICULAR:0,total:0};
+    acc[prestEf].OSDE      += (r.osde||0)*(ar.OSDE||0);
+    acc[prestEf].MEDIFE    += (r.medife||0)*(ar.MEDIFE||0);
+    acc[prestEf].PARTICULAR+= (r.particular||0)*(ar.PARTICULAR||0);
+    acc[prestEf].total     += (r.osde||0)*(ar.OSDE||0)+(r.medife||0)*(ar.MEDIFE||0)+(r.particular||0)*(ar.PARTICULAR||0);
   });
   return acc;
 }
