@@ -16,6 +16,7 @@ const USUARIOS = {
   paula:    { password: "Santafe2026$",     role: "profesional",nombre: "Paula",     profesional: "PAULA" },
   francisco:{ password: "Lujan2026$",       role: "profesional",nombre: "Francisco", profesional: "FRANCISCO" },
   daniela:  { password: "Bauti2026$",       role: "profesional",nombre: "Daniela",   profesional: "DANIELA" },
+  belen:    { password: "Platense2026$",    role: "profesional",nombre: "Belén",     profesional: "BELEN" },
 };
 
 // ══════════════════════════════════════════

@@ -8,6 +8,7 @@ export const PROFESIONALES = [
   { id: "PAULA",      color: "#ec4899", activo: true, soloRPG: true },
   { id: "DANIELA",    color: "#64748b", activo: true, esDuena: true },
   { id: "MILAGROS",   color: "#8b5cf6", activo: true },
+  { id: "BELEN",      color: "#14b8a6", activo: true },
   { id: "DAVID",      color: "#06b6d4", activo: false },
 ];
 

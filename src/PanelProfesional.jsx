@@ -13,6 +13,8 @@ const CONFIG = {
   FRANCISCO:  { color: "#f59e0b", emoji: "⚡" },
   PAULA:      { color: "#ec4899", emoji: "🧘" },
   DANIELA:    { color: "#8b5cf6", emoji: "👩‍⚕️" },
+  MILAGROS:   { color: "#8b5cf6", emoji: "🌟" },
+  BELEN:      { color: "#14b8a6", emoji: "🌊" },
 };
 
 function mesActual() {

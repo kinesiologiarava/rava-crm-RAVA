@@ -33,6 +33,7 @@ const VALORES_PROF = {
   FRANCISCO:   { prepaga: 3600,  particular:  8000, regalo: 3000  },
   "JUAN CRUZ": { prepaga: 3600,  particular:  8000, regalo: 3000  },
   MILAGROS:    { prepaga: 3600,  particular:  8000, regalo: 3000  },
+  BELEN:       { prepaga: 3600,  particular:  8000, regalo: 3000  }, // provisorio, misma tarifa que Milagros/Francisco/Juan Cruz — ajustar en Lista de Precios cuando se defina
   PAULA:       { prepaga: 14500, particular:     0, regalo: 14000, soloRPG: true },
   DANIELA:     { prepaga: 0,     particular:     0, regalo: 0,    esDuena: true },
 };
