@@ -1644,7 +1644,7 @@ function ViewPrecios({ onPreciosUpdate }) {
     }
     // Borrar filas del mes destino y reinsertar con IDs determinísticos
     await supabase.from("crm_precios").delete().eq("mes", mes);
-    const filas = data.map(r => ({ id: `${mes}_${r.clave}`, mes, clave: r.clave, valor: r.valor, descripcion: r.descripcion }));
+    const filas = data.map(r => ({ mes, clave: r.clave, valor: r.valor, descripcion: r.descripcion }));
     const { error } = await supabase.from("crm_precios").insert(filas);
     if (error) { alert("Error al copiar: " + error.message); setCopiando(false); return; }
     await cargar(mes);
