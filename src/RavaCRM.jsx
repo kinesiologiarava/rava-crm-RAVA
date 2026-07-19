@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as XLSX from "xlsx";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from "recharts";
 import { IDS_ACTIVOS, IDS_TODOS, COLOR_POR_PROFESIONAL, PROFESIONALES_ACTIVOS } from "./lib/profesionales.js";
+import { parseCabeceraOSDE } from "./lib/parseCabeceraOSDE.js";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -396,6 +397,8 @@ function ViewCobrosOSDE({registros}) {
   const [mesFiltro, setMesFiltro] = useState("todos");
   const [importandoXls, setImportandoXls] = useState(false);
   const xlsRefOsde = useRef(null);
+  const [importandoPdf, setImportandoPdf] = useState(false);
+  const pdfRefOsde = useRef(null);
 
   const FORM_EMPTY = {
     tramiteNro:"", fechaEmision:"", periodoDesde:"", periodoHasta:"",
@@ -504,6 +507,33 @@ function ViewCobrosOSDE({registros}) {
     }
     setImportandoXls(false);
     if (xlsRefOsde.current) xlsRefOsde.current.value = "";
+  }
+
+  async function importarPdfCabecera(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportandoPdf(true);
+    try {
+      const r = await parseCabeceraOSDE(file);
+      if (!r.ok) {
+        alert("No se pudo leer el PDF — parece que no es una Cabecera de Liquidación de OSDE, o tiene un formato distinto al esperado. Completá el formulario a mano.");
+      } else {
+        setForm(f => ({
+          ...f,
+          tramiteNro: r.tramite || f.tramiteNro,
+          fechaEmision: r.fechaEmision || f.fechaEmision,
+          importeGravado: r.gravado ?? f.importeGravado,
+          importeExento: r.exento ?? f.importeExento,
+          iva: r.iva ?? f.iva,
+          totalConIVA: r.total ?? f.totalConIVA,
+        }));
+        alert(`✅ Datos leídos de "${file.name}".\nTrámite ${r.tramite}, total $${r.total?.toLocaleString("es-AR")}.\nRevisá los datos antes de guardar (el período y el desglose por prestación hay que completarlos con el Detalle).`);
+      }
+    } catch (err) {
+      alert("No se pudo leer el PDF: " + err.message);
+    }
+    setImportandoPdf(false);
+    if (pdfRefOsde.current) pdfRefOsde.current.value = "";
   }
 
   function abrirEditar(t) {
@@ -820,6 +850,16 @@ function ViewCobrosOSDE({registros}) {
             </div>
             <div style={{color:"#64748b",fontSize:12,marginBottom:12}}>
               Completá con los datos del PDF "Cabecera de Liquidación" — o importá desde el Excel del Generador.
+            </div>
+
+            {/* Importar desde PDF (Cabecera de Liquidación) */}
+            <div style={{background:"#f5f3ff",border:"1px dashed #c4b5fd",borderRadius:10,padding:"12px 16px",marginBottom:12}}>
+              <div style={{fontSize:12,color:"#5b21b6",fontWeight:700,marginBottom:4}}>📄 Subir PDF "Cabecera de Liquidación" de OSDE</div>
+              <div style={{fontSize:11,color:"#7c3aed",marginBottom:10}}>Lee el trámite, fecha, gravado/exento/IVA y total directo del PDF. Revisá antes de guardar.</div>
+              <label style={{display:"inline-flex",alignItems:"center",gap:8,background:"#7c3aed",color:"white",padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700}}>
+                {importandoPdf ? "⏳ Leyendo..." : "📄 Seleccionar PDF"}
+                <input ref={pdfRefOsde} type="file" accept=".pdf" style={{display:"none"}} onChange={importarPdfCabecera} disabled={importandoPdf}/>
+              </label>
             </div>
 
             {/* Importar desde Excel */}
