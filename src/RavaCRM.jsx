@@ -1668,6 +1668,7 @@ function ViewPrecios({ onPreciosUpdate }) {
   const [copiando, setCopiando] = useState(false);
   const [saved, setSaved] = useState(false);
   const [sinDatos, setSinDatos] = useState(false);
+  const [obraSocialArancel, setObraSocialArancel] = useState("osde");
 
   // Últimos 6 meses disponibles como opciones
   const mesesDisp = Array.from({length: 6}, (_, i) => {
@@ -1884,15 +1885,25 @@ function ViewPrecios({ onPreciosUpdate }) {
             </div>
           </Card>
 
-          {/* ARANCELES OSDE */}
+          {/* ARANCELES POR OBRA SOCIAL */}
           <Card>
-            <div style={{color:"#1e293b",fontWeight:800,fontSize:14,marginBottom:16}}>🏦 Aranceles OSDE — {labelMes(mes)}</div>
-            {[
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
+              <div style={{color:"#1e293b",fontWeight:800,fontSize:14}}>💳 Aranceles — {labelMes(mes)}</div>
+              <div style={{display:"flex",gap:6}}>
+                {[["osde","🏦 OSDE"],["medife","💙 MEDIFE"]].map(([id,lbl])=>(
+                  <button key={id} onClick={()=>setObraSocialArancel(id)}
+                    style={{...S.btn(obraSocialArancel===id?"#4338ca":"#e2e8f0",11),padding:"6px 14px"}}>{lbl}</button>
+                ))}
+              </div>
+            </div>
+            {(obraSocialArancel==="osde" ? [
               {clave:"osde_fkt",    label:"FKT"},
               {clave:"osde_rpg",    label:"RPG"},
               {clave:"osde_drenaje",label:"Drenaje Linfático"},
               {clave:"osde_atm",    label:"ATM"},
-            ].map(item=>(
+            ] : [
+              {clave:"medife_sesion", label:"FKT (por sesión)"},
+            ]).map(item=>(
               <div key={item.clave} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,gap:12}}>
                 <div style={{color:"#1e293b",fontWeight:600,fontSize:13,minWidth:140}}>{item.label}</div>
                 <div style={{display:"flex",alignItems:"center",gap:4}}>
@@ -1903,34 +1914,26 @@ function ViewPrecios({ onPreciosUpdate }) {
                 </div>
               </div>
             ))}
+            {obraSocialArancel==="medife" && (
+              <div style={{color:"#94a3b8",fontSize:11,marginTop:4}}>MEDIFE hoy solo se cobra como FKT, sin distinción de RPG/Drenaje.</div>
+            )}
+            <div style={{background:"#eef2f7",borderRadius:10,padding:"10px 14px",marginTop:12,border:"1px solid #dbeafe",color:"#475569",fontSize:11,lineHeight:1.5}}>
+              💡 Se usan para estimar ingresos. El valor real lo confirma la liquidación de {obraSocialArancel==="osde"?"OSDE":"MEDIFE"}.
+            </div>
           </Card>
 
-          {/* ARANCEL MEDIFE Y REGALO */}
+          {/* REGALO — aparte, siempre manual */}
           <Card>
-            <div style={{color:"#1e293b",fontWeight:800,fontSize:14,marginBottom:16}}>💙 MEDIFE & 🎁 Regalo — {labelMes(mes)}</div>
-            {[
-              {clave:"medife_sesion", label:"MEDIFE — por sesión",        color:"#8b5cf6"},
-              {clave:"regalo_ingreso",label:"Ingreso por Regalo (consulta)",color:"#d97706"},
-            ].map(item=>(
-              <div key={item.clave} style={{marginBottom:16}}>
-                <div style={{color:"#64748b",fontSize:11,fontWeight:600,marginBottom:6,letterSpacing:"0.05em",textTransform:"uppercase"}}>{item.label}</div>
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{color:"#64748b",fontSize:13,fontWeight:700}}>$</span>
-                  <input type="number" value={val(item.clave)}
-                    onChange={e=>onChange(item.clave, e.target.value)}
-                    style={{...inputStyle(item.clave),width:160}}/>
-                  <span style={{color:item.color,fontWeight:700,fontSize:13}}>
-                    = ${Number(val(item.clave)||0).toLocaleString("es-AR")}
-                  </span>
-                </div>
-              </div>
-            ))}
-            <div style={{background:"#eef2f7",borderRadius:10,padding:"12px 14px",marginTop:8,border:"1px solid #dbeafe"}}>
-              <div style={{color:"#64748b",fontSize:11,fontWeight:600,marginBottom:4}}>💡 RECORDÁ</div>
-              <div style={{color:"#475569",fontSize:11,lineHeight:1.5}}>
-                Los aranceles OSDE se usan para estimar ingresos. El valor real lo confirma la liquidación de OSDE.<br/>
-                El arancel de Regalo se usa para calcular el ingreso del consultorio por sesiones sin cargo al paciente.
-              </div>
+            <div style={{color:"#1e293b",fontWeight:800,fontSize:14,marginBottom:6}}>🎁 Ingreso por Regalo — {labelMes(mes)}</div>
+            <div style={{color:"#94a3b8",fontSize:11,marginBottom:14}}>Valor manual — lo actualizás vos cuando quieras, no se calcula solo a partir de otro precio.</div>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{color:"#64748b",fontSize:13,fontWeight:700}}>$</span>
+              <input type="number" value={val("regalo_ingreso")}
+                onChange={e=>onChange("regalo_ingreso", e.target.value)}
+                style={{...inputStyle("regalo_ingreso"),width:160}}/>
+              <span style={{color:"#d97706",fontWeight:700,fontSize:13}}>
+                = ${Number(val("regalo_ingreso")||0).toLocaleString("es-AR")}
+              </span>
             </div>
           </Card>
 
