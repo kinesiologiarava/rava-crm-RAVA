@@ -66,7 +66,7 @@ const MES_LABELS = new Proxy({}, {
   }
 });
 const CATEGORIAS_GASTO = ["Expensas","Luz","Insumos","Limpieza","Sueldo Susana","Honorarios Contabilidad","Alquiler","Otros"];
-const PIE_COLORS = ["#6366f1","#ec4899","#10b981","#f59e0b","#06b6d4","#a78bfa","#f43f5e","#34d399"];
+const PIE_COLORS = ["#4338ca","#7c3aed","#059669","#d97706","#06b6d4","#a78bfa","#f43f5e","#34d399"];
 
 function getMesActual() {
   const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
@@ -157,18 +157,18 @@ const S = {
   label: {display:"block",color:"#64748b",fontSize:10,fontWeight:700,marginBottom:5,letterSpacing:1,textTransform:"uppercase"},
   th:    {color:"#64748b",fontWeight:700,fontSize:11,padding:"10px 12px",textAlign:"left",letterSpacing:.5,borderBottom:"1px solid #dbeafe"},
   td:    {padding:"9px 12px",borderBottom:"1px solid #e0e7ff",verticalAlign:"middle"},
-  btn:   (c="#6366f1",sz=13)=>({background:c,color:["#e2e8f0","#f1f5f9","#64748b"].includes(c)?"#475569":"#fff",border:"none",borderRadius:8,padding:`${sz>11?9:6}px ${sz>11?20:14}px`,fontWeight:700,cursor:"pointer",fontSize:sz,fontFamily:"inherit"}),
+  btn:   (c="#4338ca",sz=13)=>({background:c,color:["#e2e8f0","#f1f5f9","#64748b"].includes(c)?"#475569":"#fff",border:"none",borderRadius:8,padding:`${sz>11?9:6}px ${sz>11?20:14}px`,fontWeight:700,cursor:"pointer",fontSize:sz,fontFamily:"inherit"}),
 };
 const Card = ({children,style={}}) => <div style={{background:"#ffffff",border:"1px solid #dbeafe",borderRadius:14,padding:20,boxShadow:"0 2px 8px rgba(99,102,241,0.08)",...style}}>{children}</div>;
-const Badge = ({children,color="#6366f1"}) => <span style={{background:color+"22",color,border:`1px solid ${color}44`,borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700}}>{children}</span>;
-const StatCard = ({label,value,color="#6366f1",sub}) => (
+const Badge = ({children,color="#4338ca"}) => <span style={{background:color+"22",color,border:`1px solid ${color}44`,borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700}}>{children}</span>;
+const StatCard = ({label,value,color="#4338ca",sub}) => (
   <div style={{background:"#eef2f7",border:`1px solid ${color}33`,borderRadius:12,padding:"15px 18px",flex:1,minWidth:140}}>
     <div style={{color:"#64748b",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:5}}>{label}</div>
     <div style={{color,fontSize:20,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{value}</div>
     {sub&&<div style={{color:"#94a3b8",fontSize:11,marginTop:3}}>{sub}</div>}
   </div>
 );
-function EN({val,onChange,color="#6366f1"}) {
+function EN({val,onChange,color="#4338ca"}) {
   const [ed,setEd]=useState(false);
   const [tmp,setTmp]=useState(val);
   if(ed) return <input autoFocus type="number" value={tmp} onChange={e=>setTmp(e.target.value)}
@@ -224,17 +224,17 @@ function ViewIngresos({registros}) {
     <div>
       <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
         {mesesDisp.concat([getMesActual()]).filter((v,i,a)=>a.indexOf(v)===i).reverse().map(m=>(
-          <button key={m} onClick={()=>setMes(m)} style={{...S.btn(mes===m?"#6366f1":"#e2e8f0",12),padding:"7px 16px"}}>
+          <button key={m} onClick={()=>setMes(m)} style={{...S.btn(mes===m?"#4338ca":"#e2e8f0",12),padding:"7px 16px"}}>
             {MES_LABELS[m]||m}
           </button>
         ))}
       </div>
 
       <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:24}}>
-        <StatCard label="TOTAL BRUTO" value={fp(bruto)} color="#6366f1"/>
-        <StatCard label="OSDE" value={fp(porOS.OSDE)} color="#6366f1" sub={bruto>0?`${(porOS.OSDE/bruto*100).toFixed(1)}% del total`:""}/>
-        <StatCard label="MEDIFE" value={fp(porOS.MEDIFE)} color="#ec4899" sub={bruto>0?`${(porOS.MEDIFE/bruto*100).toFixed(1)}% del total`:""}/>
-        <StatCard label="PARTICULAR" value={fp(porOS.PARTICULAR)} color="#10b981" sub={bruto>0?`${(porOS.PARTICULAR/bruto*100).toFixed(1)}% del total`:""}/>
+        <StatCard label="TOTAL BRUTO" value={fp(bruto)} color="#4338ca"/>
+        <StatCard label="OSDE" value={fp(porOS.OSDE)} color="#4338ca" sub={bruto>0?`${(porOS.OSDE/bruto*100).toFixed(1)}% del total`:""}/>
+        <StatCard label="MEDIFE" value={fp(porOS.MEDIFE)} color="#7c3aed" sub={bruto>0?`${(porOS.MEDIFE/bruto*100).toFixed(1)}% del total`:""}/>
+        <StatCard label="PARTICULAR" value={fp(porOS.PARTICULAR)} color="#059669" sub={bruto>0?`${(porOS.PARTICULAR/bruto*100).toFixed(1)}% del total`:""}/>
       </div>
 
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
@@ -245,7 +245,7 @@ function ViewIngresos({registros}) {
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie data={pieDataOS} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({name,percent})=>`${name} ${(percent*100).toFixed(0)}%`} labelLine={false}>
-                  {pieDataOS.map((_,i)=><Cell key={i} fill={["#6366f1","#ec4899","#10b981"][i]}/>)}
+                  {pieDataOS.map((_,i)=><Cell key={i} fill={["#4338ca","#7c3aed","#059669"][i]}/>)}
                 </Pie>
                 <Tooltip formatter={v=>fp(v)} contentStyle={{background:"#1e3a6e",border:"none",borderRadius:10,color:"white"}}/>
               </PieChart>
@@ -263,9 +263,9 @@ function ViewIngresos({registros}) {
                 <YAxis tick={{fill:"#64748b",fontSize:10}} tickFormatter={v=>v>=1000000?`${(v/1000000).toFixed(1)}M`:v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
                 <Tooltip content={<TooltipCustom/>}/>
                 <Legend wrapperStyle={{fontSize:11,color:"#94a3b8"}}/>
-                <Bar dataKey="OSDE" fill="#6366f1" radius={[3,3,0,0]}/>
-                <Bar dataKey="MEDIFE" fill="#ec4899" radius={[3,3,0,0]}/>
-                <Bar dataKey="PARTICULAR" fill="#10b981" radius={[3,3,0,0]}/>
+                <Bar dataKey="OSDE" fill="#4338ca" radius={[3,3,0,0]}/>
+                <Bar dataKey="MEDIFE" fill="#7c3aed" radius={[3,3,0,0]}/>
+                <Bar dataKey="PARTICULAR" fill="#059669" radius={[3,3,0,0]}/>
               </BarChart>
             </ResponsiveContainer>
           ) : <div style={{color:"#64748b",textAlign:"center",padding:40}}>Sin datos</div>}
@@ -282,10 +282,10 @@ function ViewIngresos({registros}) {
               <YAxis tick={{fill:"#64748b",fontSize:10}} tickFormatter={v=>v>=1000000?`${(v/1000000).toFixed(1)}M`:v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
               <Tooltip content={<TooltipCustom/>}/>
               <Legend wrapperStyle={{fontSize:11,color:"#94a3b8"}}/>
-              <Line type="monotone" dataKey="OSDE" stroke="#6366f1" strokeWidth={2} dot={{r:4}}/>
-              <Line type="monotone" dataKey="MEDIFE" stroke="#ec4899" strokeWidth={2} dot={{r:4}}/>
-              <Line type="monotone" dataKey="PARTICULAR" stroke="#10b981" strokeWidth={2} dot={{r:4}}/>
-              <Line type="monotone" dataKey="Total" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 2" dot={{r:4}}/>
+              <Line type="monotone" dataKey="OSDE" stroke="#4338ca" strokeWidth={2} dot={{r:4}}/>
+              <Line type="monotone" dataKey="MEDIFE" stroke="#7c3aed" strokeWidth={2} dot={{r:4}}/>
+              <Line type="monotone" dataKey="PARTICULAR" stroke="#059669" strokeWidth={2} dot={{r:4}}/>
+              <Line type="monotone" dataKey="Total" stroke="#d97706" strokeWidth={2} strokeDasharray="4 2" dot={{r:4}}/>
             </LineChart>
           </ResponsiveContainer>
         </Card>
@@ -302,18 +302,18 @@ function ViewIngresos({registros}) {
             <tbody>
               {Object.entries(porPrest).map(([prest,d])=>(
                 <tr key={prest}>
-                  <td style={S.td}><Badge color="#6366f1">{prest}</Badge></td>
-                  <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#6366f1"}}>{fp(d.OSDE)}</td>
-                  <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#ec4899"}}>{fp(d.MEDIFE)}</td>
-                  <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#10b981"}}>{fp(d.PARTICULAR)}</td>
+                  <td style={S.td}><Badge color="#4338ca">{prest}</Badge></td>
+                  <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#4338ca"}}>{fp(d.OSDE)}</td>
+                  <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#7c3aed"}}>{fp(d.MEDIFE)}</td>
+                  <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#059669"}}>{fp(d.PARTICULAR)}</td>
                   <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#1e293b"}}>{fp(d.total)}</td>
                 </tr>
               ))}
               <tr style={{background:"#eef2f7"}}>
                 <td style={{...S.td,fontWeight:700,color:"#94a3b8"}}>TOTAL</td>
-                <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#6366f1"}}>{fp(porOS.OSDE)}</td>
-                <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#ec4899"}}>{fp(porOS.MEDIFE)}</td>
-                <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#10b981"}}>{fp(porOS.PARTICULAR)}</td>
+                <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#4338ca"}}>{fp(porOS.OSDE)}</td>
+                <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#7c3aed"}}>{fp(porOS.MEDIFE)}</td>
+                <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#059669"}}>{fp(porOS.PARTICULAR)}</td>
                 <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:15,color:"#1e293b"}}>{fp(bruto)}</td>
               </tr>
             </tbody>
@@ -614,10 +614,10 @@ function ViewCobrosOSDE({registros}) {
   return (
     <div>
       {/* Info header */}
-      <Card style={{marginBottom:20,background:"#ffffff",borderLeft:"3px solid #6366f1"}}>
+      <Card style={{marginBottom:20,background:"#ffffff",borderLeft:"3px solid #4338ca"}}>
         <div style={{color:"#475569",fontSize:13,lineHeight:1.8}}>
-          <strong style={{color:"#6366f1"}}>¿Cómo liquida OSDE?</strong> Emite un <strong style={{color:"#1e293b"}}>trámite con número único</strong> que cubre un período de fechas (no mes calendario). El depósito llega aprox. el <strong style={{color:"#1e293b"}}>día 9 del mes siguiente</strong> a la emisión.<br/>
-          <span style={{color:"#64748b",fontSize:12}}>Ej: Trámite 5805582132 emitido 23/02 → cubre 15/01 al 12/02 → cobro impacta en <strong style={{color:"#f59e0b"}}>marzo 2026</strong>.</span>
+          <strong style={{color:"#4338ca"}}>¿Cómo liquida OSDE?</strong> Emite un <strong style={{color:"#1e293b"}}>trámite con número único</strong> que cubre un período de fechas (no mes calendario). El depósito llega aprox. el <strong style={{color:"#1e293b"}}>día 9 del mes siguiente</strong> a la emisión.<br/>
+          <span style={{color:"#64748b",fontSize:12}}>Ej: Trámite 5805582132 emitido 23/02 → cubre 15/01 al 12/02 → cobro impacta en <strong style={{color:"#d97706"}}>marzo 2026</strong>.</span>
         </div>
       </Card>
 
@@ -626,14 +626,14 @@ function ViewCobrosOSDE({registros}) {
         <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:20}}>
           {Object.entries(porMes).sort((a,b)=>b[0].localeCompare(a[0])).map(([m,d])=>(
             <div key={m} onClick={()=>setMesFiltro(mesFiltro===m?"todos":m)}
-              style={{background: mesFiltro===m?"#6366f1":"#f8faff",
-                border:`1px solid ${mesFiltro===m?"#6366f1":"#6366f133"}`,
+              style={{background: mesFiltro===m?"#4338ca":"#f8faff",
+                border:`1px solid ${mesFiltro===m?"#4338ca":"#4338ca33"}`,
                 borderRadius:12,padding:"14px 18px",flex:1,minWidth:160,cursor:"pointer",
                 transition:"all 0.15s"}}>
               <div style={{color:mesFiltro===m?"rgba(255,255,255,0.7)":"#64748b",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:5}}>
                 COBRO {labelMes(m).toUpperCase()}
               </div>
-              <div style={{color:mesFiltro===m?"#fff":"#10b981",fontSize:20,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{fp(d.totalConIVA)}</div>
+              <div style={{color:mesFiltro===m?"#fff":"#059669",fontSize:20,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{fp(d.totalConIVA)}</div>
               <div style={{color:mesFiltro===m?"rgba(255,255,255,0.6)":"#64748b",fontSize:11,marginTop:3}}>
                 {d.visitas} prest. · s/IVA: {fp(d.totalSinIVA)}
               </div>
@@ -646,7 +646,7 @@ function ViewCobrosOSDE({registros}) {
       <div style={{display:"flex",gap:8,marginBottom:20,alignItems:"center",flexWrap:"wrap"}}>
         {[["tramites","📋 Trámites OSDE"],["comparativa","🔍 Estimado vs Real"]].map(([id,lbl])=>(
           <button key={id} onClick={()=>setTab(id)}
-            style={{...S.btn(tab===id?"#6366f1":"#e2e8f0",12),padding:"7px 18px"}}>{lbl}</button>
+            style={{...S.btn(tab===id?"#4338ca":"#e2e8f0",12),padding:"7px 18px"}}>{lbl}</button>
         ))}
         {mesFiltro!=="todos" && (
           <span style={{background:"#fef3c7",border:"1px solid #fde68a",borderRadius:20,padding:"4px 12px",fontSize:12,color:"#92400e",fontWeight:700}}>
@@ -655,7 +655,7 @@ function ViewCobrosOSDE({registros}) {
           </span>
         )}
         <div style={{flex:1}}/>
-        <button onClick={abrirNuevo} style={S.btn("#6366f1")}>＋ Nuevo trámite OSDE</button>
+        <button onClick={abrirNuevo} style={S.btn("#4338ca")}>＋ Nuevo trámite OSDE</button>
       </div>
 
       {cargando && <div style={{color:"#64748b",padding:40,textAlign:"center"}}>Cargando trámites...</div>}
@@ -679,8 +679,8 @@ function ViewCobrosOSDE({registros}) {
                   <div>
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4,flexWrap:"wrap"}}>
                       <span style={{color:"#1e293b",fontWeight:800,fontSize:15}}>Trámite {t.tramiteNro}</span>
-                      <Badge color="#f59e0b">OSDE</Badge>
-                      <Badge color="#10b981">Impacta {labelMes(t.mesImpacto)}</Badge>
+                      <Badge color="#d97706">OSDE</Badge>
+                      <Badge color="#059669">Impacta {labelMes(t.mesImpacto)}</Badge>
                     </div>
                     <div style={{color:"#64748b",fontSize:12}}>
                       Emitido: <span style={{color:"#94a3b8"}}>{t.fechaEmision}</span>
@@ -691,7 +691,7 @@ function ViewCobrosOSDE({registros}) {
                   <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
                     <div style={{textAlign:"right"}}>
                       <div style={{color:"#64748b",fontSize:10,marginBottom:3}}>TOTAL CON IVA</div>
-                      <div style={{color:"#10b981",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:20}}>{fp(t.totalConIVA)}</div>
+                      <div style={{color:"#059669",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:20}}>{fp(t.totalConIVA)}</div>
                     </div>
                     <div style={{display:"flex",gap:6}}>
                       <button onClick={()=>abrirEditar(t)} title="Editar"
@@ -705,9 +705,9 @@ function ViewCobrosOSDE({registros}) {
                 {/* Desglose financiero */}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
                   {[
-                    {lbl:"Gravado",val:t.importeGravado,color:"#6366f1"},
+                    {lbl:"Gravado",val:t.importeGravado,color:"#4338ca"},
                     {lbl:"Exento",val:t.importeExento,color:"#94a3b8"},
-                    {lbl:"IVA 10.5%",val:t.iva,color:"#f59e0b"},
+                    {lbl:"IVA 10.5%",val:t.iva,color:"#d97706"},
                     {lbl:"Sin IVA (base)",val:t.totalSinIVA,color:"#1e293b"},
                   ].map(({lbl,val,color})=>(
                     <div key={lbl} style={{background:"#f8faff",borderRadius:8,padding:"10px 12px",textAlign:"center"}}>
@@ -735,13 +735,13 @@ function ViewCobrosOSDE({registros}) {
                           const dif = (d.liquidado||0) - e.estimado;
                           return (
                             <tr key={prest}>
-                              <td style={S.td}><Badge color={prest==="FKT"?"#6366f1":prest==="RPG"?"#ec4899":"#06b6d4"}>{prest}</Badge></td>
-                              <td style={{...S.td,textAlign:"right",color:"#10b981",fontWeight:700}}>{d.visitas}</td>
-                              <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#10b981"}}>{fp(d.liquidado)}</td>
-                              <td style={{...S.td,textAlign:"right",color:"#6366f1"}}>{e.visitas||"—"}</td>
-                              <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#6366f1"}}>{e.estimado>0?fp(e.estimado):"Sin datos"}</td>
+                              <td style={S.td}><Badge color={prest==="FKT"?"#4338ca":prest==="RPG"?"#7c3aed":"#06b6d4"}>{prest}</Badge></td>
+                              <td style={{...S.td,textAlign:"right",color:"#059669",fontWeight:700}}>{d.visitas}</td>
+                              <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#059669"}}>{fp(d.liquidado)}</td>
+                              <td style={{...S.td,textAlign:"right",color:"#4338ca"}}>{e.visitas||"—"}</td>
+                              <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#4338ca"}}>{e.estimado>0?fp(e.estimado):"Sin datos"}</td>
                               <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,
-                                color:e.estimado===0?"#64748b":Math.abs(dif)<10000?"#10b981":dif>0?"#f59e0b":"#ef4444"}}>
+                                color:e.estimado===0?"#64748b":Math.abs(dif)<10000?"#059669":dif>0?"#d97706":"#dc2626"}}>
                                 {e.estimado===0?"—":dif>=0?`▲ ${fp(dif)}`:`▼ ${fp(Math.abs(dif))}`}
                               </td>
                             </tr>
@@ -755,7 +755,7 @@ function ViewCobrosOSDE({registros}) {
                 {/* Delta total */}
                 <div style={{marginTop:12,display:"flex",justifyContent:"flex-end",alignItems:"center",gap:12}}>
                   <span style={{color:"#64748b",fontSize:12}}>Diferencia total (real vs estimado CRM):</span>
-                  <span style={{color:est.total===0?"#64748b":Math.abs(delta)<50000?"#10b981":delta>0?"#f59e0b":"#ef4444",
+                  <span style={{color:est.total===0?"#64748b":Math.abs(delta)<50000?"#059669":delta>0?"#d97706":"#dc2626",
                     fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:16}}>
                     {est.total===0?"Sin datos en CRM":delta>=0?`▲ ${fp(delta)}`:`▼ ${fp(Math.abs(delta))}`}
                   </span>
@@ -792,14 +792,14 @@ function ViewCobrosOSDE({registros}) {
                     const delta=t.totalSinIVA-est.total;
                     return (
                       <tr key={t.id}>
-                        <td style={{...S.td,fontWeight:700,color:"#f59e0b"}}>{labelMes(t.mesImpacto)}</td>
+                        <td style={{...S.td,fontWeight:700,color:"#d97706"}}>{labelMes(t.mesImpacto)}</td>
                         <td style={{...S.td,color:"#94a3b8",fontFamily:"'DM Mono',monospace",fontSize:11}}>{t.tramiteNro}</td>
                         <td style={{...S.td,color:"#64748b",fontSize:11}}>{t.periodoDesde} → {t.periodoHasta}</td>
-                        <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:est.total>0?"#6366f1":"#64748b"}}>{est.total>0?fp(est.total):"—"}</td>
-                        <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#10b981",fontWeight:700}}>{fp(t.totalSinIVA)}</td>
-                        <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#10b981"}}>{fp(t.totalConIVA)}</td>
+                        <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:est.total>0?"#4338ca":"#64748b"}}>{est.total>0?fp(est.total):"—"}</td>
+                        <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#059669",fontWeight:700}}>{fp(t.totalSinIVA)}</td>
+                        <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#059669"}}>{fp(t.totalConIVA)}</td>
                         <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,
-                          color:est.total===0?"#64748b":Math.abs(delta)<100000?"#10b981":delta>0?"#f59e0b":"#ef4444"}}>
+                          color:est.total===0?"#64748b":Math.abs(delta)<100000?"#059669":delta>0?"#d97706":"#dc2626"}}>
                           {est.total===0?"—":delta>=0?`▲ ${fp(delta)}`:`▼ ${fp(Math.abs(delta))}`}
                         </td>
                       </tr>
@@ -853,7 +853,7 @@ function ViewCobrosOSDE({registros}) {
             <div style={{background:"#f8faff",borderRadius:10,padding:12,marginBottom:14}}>
               {["FKT","RPG","DRENAJE"].map(prest=>(
                 <div key={prest} style={{display:"grid",gridTemplateColumns:"90px 1fr 1fr",gap:10,marginBottom:8,alignItems:"center"}}>
-                  <Badge color={prest==="FKT"?"#6366f1":prest==="RPG"?"#ec4899":"#06b6d4"}>{prest}</Badge>
+                  <Badge color={prest==="FKT"?"#4338ca":prest==="RPG"?"#7c3aed":"#06b6d4"}>{prest}</Badge>
                   <div>
                     <label style={S.label}>Visitas</label>
                     <input type="number" style={S.input} value={form.prestaciones[prest]?.visitas||0}
@@ -867,7 +867,7 @@ function ViewCobrosOSDE({registros}) {
                 </div>
               ))}
               <div style={{borderTop:"1px solid #dbeafe",paddingTop:10,marginTop:8,display:"flex",justifyContent:"flex-end",color:"#475569",fontSize:12,fontWeight:700}}>
-                Total sin IVA (calculado): <span style={{fontFamily:"'DM Mono',monospace",color:"#6366f1",marginLeft:10}}>
+                Total sin IVA (calculado): <span style={{fontFamily:"'DM Mono',monospace",color:"#4338ca",marginLeft:10}}>
                   {fp(Object.values(form.prestaciones).reduce((s,p)=>s+(parseFloat(p.liquidado)||0),0))}
                 </span>
               </div>
@@ -882,7 +882,7 @@ function ViewCobrosOSDE({registros}) {
               <div><label style={S.label}>IVA 10.5%</label>
                 <input type="number" style={S.input} value={form.iva} onChange={e=>setForm(f=>({...f,iva:e.target.value}))}/></div>
               <div><label style={S.label}>TOTAL CON IVA ← el que deposita OSDE</label>
-                <input type="number" style={{...S.input,border:"2px solid #10b981",background:"#f0fdf4"}} value={form.totalConIVA} onChange={e=>setForm(f=>({...f,totalConIVA:e.target.value}))}/></div>
+                <input type="number" style={{...S.input,border:"2px solid #059669",background:"#f0fdf4"}} value={form.totalConIVA} onChange={e=>setForm(f=>({...f,totalConIVA:e.target.value}))}/></div>
               <div style={{gridColumn:"1/-1"}}>
                 <label style={S.label}>Notas</label>
                 <input style={S.input} value={form.notas} onChange={e=>setForm(f=>({...f,notas:e.target.value}))} placeholder="Ej: Pago acreditado el 09/03/2026"/>
@@ -890,7 +890,7 @@ function ViewCobrosOSDE({registros}) {
             </div>
 
             <div style={{display:"flex",gap:10}}>
-              <button onClick={guardar} disabled={guardando} style={S.btn("#6366f1")}>
+              <button onClick={guardar} disabled={guardando} style={S.btn("#4338ca")}>
                 {guardando ? "Guardando..." : editando ? "💾 Actualizar trámite" : "💾 Guardar trámite"}
               </button>
               <button onClick={()=>setShowForm(false)} style={S.btn("#64748b")}>Cancelar</button>
@@ -953,30 +953,30 @@ function ViewRentabilidad({registros,precios}) {
     <div>
       <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
         {mesesDisp.slice(0,5).map(m=>(
-          <button key={m} onClick={()=>setMes(m)} style={{...S.btn(mes===m?"#6366f1":"#e2e8f0",12),padding:"7px 16px"}}>
+          <button key={m} onClick={()=>setMes(m)} style={{...S.btn(mes===m?"#4338ca":"#e2e8f0",12),padding:"7px 16px"}}>
             {MES_LABELS[m]||m}
           </button>
         ))}
         <div style={{flex:1}}/>
-        <button onClick={()=>setShowForm(true)} style={S.btn("#ec4899")}>＋ Agregar gasto</button>
+        <button onClick={()=>setShowForm(true)} style={S.btn("#7c3aed")}>＋ Agregar gasto</button>
       </div>
 
       {/* KPIs rentabilidad */}
       <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:20}}>
-        <StatCard label="INGRESO BRUTO" value={fp(bruto)} color="#6366f1"/>
-        <StatCard label="HONORARIOS PROFS." value={fp(totalHon)} color="#f59e0b"/>
-        <StatCard label="GASTOS FIJOS" value={fp(totalGastos)} color="#ef4444"/>
-        <StatCard label="RESULTADO NETO" value={fp(rentabilidad)} color={rentabilidad>=0?"#10b981":"#ef4444"} sub={`Margen: ${margen}%`}/>
+        <StatCard label="INGRESO BRUTO" value={fp(bruto)} color="#4338ca"/>
+        <StatCard label="HONORARIOS PROFS." value={fp(totalHon)} color="#d97706"/>
+        <StatCard label="GASTOS FIJOS" value={fp(totalGastos)} color="#dc2626"/>
+        <StatCard label="RESULTADO NETO" value={fp(rentabilidad)} color={rentabilidad>=0?"#059669":"#dc2626"} sub={`Margen: ${margen}%`}/>
       </div>
 
       {/* Resumen waterfall visual */}
       <Card style={{marginBottom:20}}>
         <div style={{color:"#1e293b",fontWeight:700,marginBottom:16,fontSize:13}}>💧 Análisis de Rentabilidad — {MES_LABELS[mes]||mes}</div>
         {[
-          {label:"Ingreso Bruto Clínica",valor:bruto,color:"#6366f1",signo:"+"},
-          {label:"Honorarios Profesionales",valor:totalHon,color:"#f59e0b",signo:"−"},
-          {label:"Gastos Fijos",valor:totalGastos,color:"#ef4444",signo:"−"},
-          {label:"RESULTADO NETO",valor:rentabilidad,color:rentabilidad>=0?"#10b981":"#ef4444",signo:"=",bold:true},
+          {label:"Ingreso Bruto Clínica",valor:bruto,color:"#4338ca",signo:"+"},
+          {label:"Honorarios Profesionales",valor:totalHon,color:"#d97706",signo:"−"},
+          {label:"Gastos Fijos",valor:totalGastos,color:"#dc2626",signo:"−"},
+          {label:"RESULTADO NETO",valor:rentabilidad,color:rentabilidad>=0?"#059669":"#dc2626",signo:"=",bold:true},
         ].map(({label,valor,color,signo,bold})=>(
           <div key={label} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:"1px solid #dbeafe"}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -1015,9 +1015,9 @@ function ViewRentabilidad({registros,precios}) {
                 <YAxis tick={{fill:"#64748b",fontSize:9}} tickFormatter={v=>v>=1000000?`${(v/1000000).toFixed(1)}M`:v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
                 <Tooltip content={<TooltipCustom/>}/>
                 <Legend wrapperStyle={{fontSize:10,color:"#94a3b8"}}/>
-                <Line type="monotone" dataKey="Ingresos" stroke="#6366f1" strokeWidth={2} dot={{r:3}}/>
-                <Line type="monotone" dataKey="Costos" stroke="#ef4444" strokeWidth={2} dot={{r:3}}/>
-                <Line type="monotone" dataKey="Rentabilidad" stroke="#10b981" strokeWidth={2} dot={{r:3}}/>
+                <Line type="monotone" dataKey="Ingresos" stroke="#4338ca" strokeWidth={2} dot={{r:3}}/>
+                <Line type="monotone" dataKey="Costos" stroke="#dc2626" strokeWidth={2} dot={{r:3}}/>
+                <Line type="monotone" dataKey="Rentabilidad" stroke="#059669" strokeWidth={2} dot={{r:3}}/>
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -1030,14 +1030,14 @@ function ViewRentabilidad({registros,precios}) {
         {gastosMes.length===0 && <div style={{color:"#64748b",textAlign:"center",padding:24}}>No hay gastos cargados para este mes</div>}
         {gastosMes.map(g=>(
           <div key={g.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #dbeafe"}}>
-            <Badge color={g.categoria==="Sueldo Susana"?"#ec4899":g.categoria==="Luz"?"#f59e0b":"#6366f1"}>{g.categoria}</Badge>
+            <Badge color={g.categoria==="Sueldo Susana"?"#7c3aed":g.categoria==="Luz"?"#d97706":"#4338ca"}>{g.categoria}</Badge>
             <div style={{flex:1,color:"#94a3b8",fontSize:12}}>{g.notas||"—"}</div>
-            <div style={{color:"#ef4444",fontFamily:"'DM Mono',monospace",fontWeight:700}}>{fp(g.monto)}</div>
-            <button onClick={()=>eliminar(g.id)} style={{...S.btn("#1a0a0a",11),padding:"4px 10px",color:"#ef4444"}}>✕</button>
+            <div style={{color:"#dc2626",fontFamily:"'DM Mono',monospace",fontWeight:700}}>{fp(g.monto)}</div>
+            <button onClick={()=>eliminar(g.id)} style={{...S.btn("#1a0a0a",11),padding:"4px 10px",color:"#dc2626"}}>✕</button>
           </div>
         ))}
         {gastosMes.length>0 && (
-          <div style={{display:"flex",justifyContent:"flex-end",padding:"10px 0",fontFamily:"'DM Mono',monospace",fontWeight:800,color:"#ef4444",fontSize:16}}>
+          <div style={{display:"flex",justifyContent:"flex-end",padding:"10px 0",fontFamily:"'DM Mono',monospace",fontWeight:800,color:"#dc2626",fontSize:16}}>
             Total gastos: {fp(totalGastos)}
           </div>
         )}
@@ -1058,7 +1058,7 @@ function ViewRentabilidad({registros,precios}) {
               <div><label style={S.label}>Notas</label><input style={S.input} value={form.notas} onChange={e=>setForm(f=>({...f,notas:e.target.value}))} placeholder="Opcional"/></div>
             </div>
             <div style={{display:"flex",gap:10,marginTop:18}}>
-              <button onClick={guardar} style={S.btn("#ec4899")}>Guardar</button>
+              <button onClick={guardar} style={S.btn("#7c3aed")}>Guardar</button>
               <button onClick={()=>setShowForm(false)} style={S.btn("#e2e8f0")}>Cancelar</button>
             </div>
           </Card>
@@ -1149,26 +1149,26 @@ function ViewLiquidacion({registros,setRegistros,precios}) {
       <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
         <div style={{display:"flex",gap:6,flexWrap:"wrap",flex:1}}>
           {mesesDisp.slice(0,5).map(m=>(
-            <button key={m} onClick={()=>setMes(m)} style={{...S.btn(mes===m?"#6366f1":"#e2e8f0",12),padding:"7px 16px"}}>
+            <button key={m} onClick={()=>setMes(m)} style={{...S.btn(mes===m?"#4338ca":"#e2e8f0",12),padding:"7px 16px"}}>
               {MES_LABELS[m]||m}
             </button>
           ))}
         </div>
         <div style={{display:"flex",gap:8}}>
           <button onClick={()=>setShowImport(true)} style={{...S.btn("#cbd5e1",12),border:"1px solid #2a3d5a"}}>📥 Importar Excel</button>
-          <button onClick={()=>setShowAgregar(true)} style={S.btn("#10b981",12)}>＋ Agregar</button>
-          <button onClick={()=>{ setOverrides({}); setRegalos({}); }} style={{...S.btn("#f59e0b",12),border:"1px solid #f59e0b33"}} title="Limpiar ajustes manuales y recalcular desde Supabase">🔄 Actualizar</button>
+          <button onClick={()=>setShowAgregar(true)} style={S.btn("#059669",12)}>＋ Agregar</button>
+          <button onClick={()=>{ setOverrides({}); setRegalos({}); }} style={{...S.btn("#d97706",12),border:"1px solid #d9770633"}} title="Limpiar ajustes manuales y recalcular desde Supabase">🔄 Actualizar</button>
         </div>
       </div>
 
       <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:20}}>
-        <StatCard label="INGRESO BRUTO" value={fp(bruto)} color="#6366f1"/>
-        <StatCard label="TOTAL HONORARIOS" value={fp(totalHon)} color="#ef4444"/>
-        <StatCard label="MARGEN BRUTO" value={fp(bruto-totalHon)} color="#10b981" sub="Antes gastos fijos"/>
+        <StatCard label="INGRESO BRUTO" value={fp(bruto)} color="#4338ca"/>
+        <StatCard label="TOTAL HONORARIOS" value={fp(totalHon)} color="#dc2626"/>
+        <StatCard label="MARGEN BRUTO" value={fp(bruto-totalHon)} color="#059669" sub="Antes gastos fijos"/>
       </div>
 
       {!tieneData && (
-        <div style={{background:"#f59e0b0d",border:"1px solid #f59e0b33",borderRadius:10,padding:"12px 16px",marginBottom:16,color:"#f59e0b",fontSize:13}}>
+        <div style={{background:"#d977060d",border:"1px solid #d9770633",borderRadius:10,padding:"12px 16px",marginBottom:16,color:"#d97706",fontSize:13}}>
           ⚠️ Sin datos para <strong>{MES_LABELS[mes]||mes}</strong>. Importá el Excel o cargá manualmente.
         </div>
       )}
@@ -1199,17 +1199,17 @@ function ViewLiquidacion({registros,setRegistros,precios}) {
                     {isDuena||isPaula?<span style={{color:"#cbd5e1"}}>—</span>:<EN val={particular} onChange={v=>setOv(prof,"particular",v)} color={color}/>}
                   </td>
                   <td style={{...S.td,textAlign:"right"}}>
-                    {isDuena?<span style={{color:"#cbd5e1"}}>—</span>:<EN val={reg} onChange={v=>setRegalos(r=>({...r,[`${mes}_${prof}`]:parseInt(v)||0}))} color="#f59e0b"/>}
+                    {isDuena?<span style={{color:"#cbd5e1"}}>—</span>:<EN val={reg} onChange={v=>setRegalos(r=>({...r,[`${mes}_${prof}`]:parseInt(v)||0}))} color="#d97706"/>}
                   </td>
                   <td style={{...S.td,textAlign:"right"}}>
                     {isDuena?<span style={{color:"#cbd5e1",fontSize:12}}>No aplica</span>
-                      :<span style={{color:"#10b981",fontWeight:800,fontFamily:"'DM Mono',monospace",fontSize:16}}>{fp(hon)}</span>}
+                      :<span style={{color:"#059669",fontWeight:800,fontFamily:"'DM Mono',monospace",fontSize:16}}>{fp(hon)}</span>}
                   </td>
                 </tr>
               ))}
               <tr style={{background:"#eef2f7"}}>
-                <td style={{...S.td,fontWeight:800,color:"#ef4444"}} colSpan={6}>TOTAL A PAGAR</td>
-                <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#ef4444",fontFamily:"'DM Mono',monospace",fontSize:18}}>{fp(totalHon)}</td>
+                <td style={{...S.td,fontWeight:800,color:"#dc2626"}} colSpan={6}>TOTAL A PAGAR</td>
+                <td style={{...S.td,textAlign:"right",fontWeight:800,color:"#dc2626",fontFamily:"'DM Mono',monospace",fontSize:18}}>{fp(totalHon)}</td>
               </tr>
             </tbody>
           </table>
@@ -1222,13 +1222,13 @@ function ViewLiquidacion({registros,setRegistros,precios}) {
           <Card style={{width:460,maxWidth:"90vw"}}>
             <div style={{color:"#1e293b",fontWeight:800,fontSize:15,marginBottom:14}}>📥 Importar Excel</div>
             <div style={{background:"#f8faff",borderRadius:9,padding:14,marginBottom:14,color:"#94a3b8",fontSize:13,lineHeight:1.6}}>
-              Subí el archivo <code style={{color:"#6366f1"}}>.xlsx</code> de liquidación generado por el CRM.<br/>
+              Subí el archivo <code style={{color:"#4338ca"}}>.xlsx</code> de liquidación generado por el CRM.<br/>
               <span style={{color:"#64748b",fontSize:11}}>El mes se detecta automáticamente por el nombre de la hoja.</span>
             </div>
-            {importMsg&&<div style={{background:importMsg.ok?"#10b98111":"#ef444411",border:`1px solid ${importMsg.ok?"#10b981":"#ef4444"}44`,borderRadius:8,padding:"10px 14px",marginBottom:12,color:importMsg.ok?"#10b981":"#ef4444",fontSize:13}}>{importMsg.msg}</div>}
+            {importMsg&&<div style={{background:importMsg.ok?"#05966911":"#dc262611",border:`1px solid ${importMsg.ok?"#059669":"#dc2626"}44`,borderRadius:8,padding:"10px 14px",marginBottom:12,color:importMsg.ok?"#059669":"#dc2626",fontSize:13}}>{importMsg.msg}</div>}
             <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={handleFile} style={{display:"none"}}/>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>fileRef.current.click()} style={S.btn("#6366f1")}>Seleccionar .xlsx</button>
+              <button onClick={()=>fileRef.current.click()} style={S.btn("#4338ca")}>Seleccionar .xlsx</button>
               <button onClick={()=>{setShowImport(false);setImportMsg(null)}} style={S.btn("#e2e8f0")}>Cerrar</button>
             </div>
           </Card>
@@ -1259,7 +1259,7 @@ function ViewLiquidacion({registros,setRegistros,precios}) {
               <div><label style={S.label}>Notas</label><input style={S.input} value={formDia.notas} onChange={e=>setFormDia(f=>({...f,notas:e.target.value}))}/></div>
             </div>
             <div style={{display:"flex",gap:10,marginTop:18}}>
-              <button onClick={guardarDia} style={S.btn("#10b981")}>Guardar</button>
+              <button onClick={guardarDia} style={S.btn("#059669")}>Guardar</button>
               <button onClick={()=>setShowAgregar(false)} style={S.btn("#e2e8f0")}>Cancelar</button>
             </div>
           </Card>
@@ -1280,7 +1280,7 @@ function ViewFichaProfesional({prof, registros, precios, pagosProfesionales=[], 
     const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-i);
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
   });
-  const color = COLOR_POR_PROFESIONAL[prof] || "#6366f1";
+  const color = COLOR_POR_PROFESIONAL[prof] || "#4338ca";
 
   const res = useMemo(()=>calcResumen(registros,mes),[registros,mes]);
   const d = res[prof] || {osde:0,medife:0,particular:0,regalo:0};
@@ -1326,9 +1326,9 @@ function ViewFichaProfesional({prof, registros, precios, pagosProfesionales=[], 
       <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
         {[
           {label:"SESIONES",         val:sesiones,   color:"#1e293b", fmt:v=>v},
-          {label:"HONORARIO GENERADO", val:honGenerado, color:"#6366f1", fmt:fp},
-          {label:"HONORARIO PAGADO", val:honPagado,  color:"#10b981", fmt:v=>v==null?"sin registrar":fp(v)},
-          {label:"DIFERENCIA",       val:diferencia, color:diferencia&&diferencia!==0?"#ef4444":"#94a3b8", fmt:v=>v==null?"—":fp(v)},
+          {label:"HONORARIO GENERADO", val:honGenerado, color:"#4338ca", fmt:fp},
+          {label:"HONORARIO PAGADO", val:honPagado,  color:"#059669", fmt:v=>v==null?"sin registrar":fp(v)},
+          {label:"DIFERENCIA",       val:diferencia, color:diferencia&&diferencia!==0?"#dc2626":"#94a3b8", fmt:v=>v==null?"—":fp(v)},
         ].map(({label,val,color:c,fmt})=>(
           <div key={label} style={{background:"#f8faff",border:`1px solid ${c}28`,borderRadius:12,padding:"14px 16px",flex:1,minWidth:140}}>
             <div style={{color:"#64748b",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:5}}>{label}</div>
@@ -1372,10 +1372,10 @@ function ViewFichaProfesional({prof, registros, precios, pagosProfesionales=[], 
                 return (
                   <tr key={row.dia}>
                     <td style={{...S.td,fontWeight:700,color:"#1e293b"}}>{row.dia}</td>
-                    <td style={{...S.td,textAlign:"right",color:"#6366f1"}}>{row.osde}</td>
-                    <td style={{...S.td,textAlign:"right",color:"#ec4899"}}>{row.medife}</td>
-                    <td style={{...S.td,textAlign:"right",color:"#10b981"}}>{row.particular}</td>
-                    <td style={{...S.td,textAlign:"right",color:"#f59e0b"}}>{row.regalo}</td>
+                    <td style={{...S.td,textAlign:"right",color:"#4338ca"}}>{row.osde}</td>
+                    <td style={{...S.td,textAlign:"right",color:"#7c3aed"}}>{row.medife}</td>
+                    <td style={{...S.td,textAlign:"right",color:"#059669"}}>{row.particular}</td>
+                    <td style={{...S.td,textAlign:"right",color:"#d97706"}}>{row.regalo}</td>
                     <td style={{...S.td,textAlign:"right",fontWeight:700}}>{total}</td>
                     <td style={{...S.td,color:"#94a3b8",fontSize:11}}>{[...new Set(row.notas)].join(" · ")}</td>
                   </tr>
@@ -1452,7 +1452,7 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
     {name:"Honorarios",[antLabel]:Math.round(totalHonAnt),    [mesLabel]:Math.round(totalHon)},
   ];
 
-  const delta=(a,b)=>{if(!b)return null;const d=a-b,pct=b>0?((d/b)*100).toFixed(1):null;return{d,pct,color:d>=0?"#10b981":"#ef4444",arrow:d>=0?"▲":"▼"};};
+  const delta=(a,b)=>{if(!b)return null;const d=a-b,pct=b>0?((d/b)*100).toFixed(1):null;return{d,pct,color:d>=0?"#059669":"#dc2626",arrow:d>=0?"▲":"▼"};};
 
   return (
     <div>
@@ -1460,7 +1460,7 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
       <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
           {mesesDisp.slice(0,5).map(m=>(
-            <button key={m} onClick={()=>setMes(m)} style={{...S.btn(mes===m?"#6366f1":"#e2e8f0",12),padding:"7px 16px"}}>
+            <button key={m} onClick={()=>setMes(m)} style={{...S.btn(mes===m?"#4338ca":"#e2e8f0",12),padding:"7px 16px"}}>
               {MES_LABELS[m]||m}
             </button>
           ))}
@@ -1468,7 +1468,7 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
         <div style={{flex:1}}/>
         <div style={{display:"flex",gap:6}}>
           {[["profesional","👥 Por profesional"],["especialidad","🏥 Por especialidad"]].map(([id,lbl])=>(
-            <button key={id} onClick={()=>setVista(id)} style={{...S.btn(vista===id?"#10b981":"#e2e8f0",11),padding:"6px 14px"}}>{lbl}</button>
+            <button key={id} onClick={()=>setVista(id)} style={{...S.btn(vista===id?"#059669":"#e2e8f0",11),padding:"6px 14px"}}>{lbl}</button>
           ))}
         </div>
       </div>
@@ -1477,10 +1477,10 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
       <div style={{color:"#64748b",fontSize:11,fontWeight:700,letterSpacing:1,marginBottom:8}}>¿CÓMO VIENE {(MES_LABELS[mes]||mes).toUpperCase()}?</div>
       <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
         {[
-          {label:"FACTURADO",       val:facturadoReal, color:"#6366f1"},
-          {label:"COBRADO",         val:cobradoReal,   color:"#10b981"},
-          {label:"PENDIENTE",       val:pendienteReal, color:"#f59e0b"},
-          {label:"HONORARIOS A PAGAR", val:totalHon,    color:"#ef4444"},
+          {label:"FACTURADO",       val:facturadoReal, color:"#4338ca"},
+          {label:"COBRADO",         val:cobradoReal,   color:"#059669"},
+          {label:"PENDIENTE",       val:pendienteReal, color:"#d97706"},
+          {label:"HONORARIOS A PAGAR", val:totalHon,    color:"#dc2626"},
         ].map(({label,val,color})=>(
           <div key={label} style={{background:"#f8faff",border:`1px solid ${color}28`,borderRadius:12,padding:"16px 18px",flex:1,minWidth:150}}>
             <div style={{color:"#64748b",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:6}}>{label}</div>
@@ -1489,7 +1489,7 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
         ))}
       </div>
       {periodosDelMes.length===0 && (
-        <div style={{background:"#f59e0b0d",border:"1px solid #f59e0b33",borderRadius:10,padding:"10px 16px",marginBottom:16,color:"#b45309",fontSize:12}}>
+        <div style={{background:"#d977060d",border:"1px solid #d9770633",borderRadius:10,padding:"10px 16px",marginBottom:16,color:"#b45309",fontSize:12}}>
           Todavía no hay períodos de liquidación cargados para {MES_LABELS[mes]||mes} — Facturado/Cobrado/Pendiente se van a completar a medida que se carguen los trámites y facturas correspondientes.
         </div>
       )}
@@ -1499,19 +1499,19 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
         {["OSDE","MEDIFE"].map(nombre=>{
           const d=porOSReal[nombre]||{facturado:0,cobrado:0};
-          const color=nombre==="OSDE"?"#6366f1":"#ec4899";
+          const color=nombre==="OSDE"?"#4338ca":"#7c3aed";
           return (
             <Card key={nombre} style={{padding:16}}>
               <div style={{color,fontWeight:800,fontSize:13,marginBottom:8}}>{nombre}</div>
               <div style={{color:"#64748b",fontSize:10,letterSpacing:.5}}>FACTURADO</div>
               <div style={{color:"#1e293b",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:16,marginBottom:6}}>{fp(d.facturado)}</div>
               <div style={{color:"#64748b",fontSize:10,letterSpacing:.5}}>PENDIENTE DE COBRO</div>
-              <div style={{color:"#f59e0b",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:16}}>{fp(d.facturado-d.cobrado)}</div>
+              <div style={{color:"#d97706",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:16}}>{fp(d.facturado-d.cobrado)}</div>
             </Card>
           );
         })}
         <Card style={{padding:16}}>
-          <div style={{color:"#10b981",fontWeight:800,fontSize:13,marginBottom:8}}>PARTICULAR</div>
+          <div style={{color:"#059669",fontWeight:800,fontSize:13,marginBottom:8}}>PARTICULAR</div>
           <div style={{color:"#64748b",fontSize:10,letterSpacing:.5}}>ESTIMADO (sin período de liquidación propio)</div>
           <div style={{color:"#1e293b",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:16}}>{fp(porOS.PARTICULAR)}</div>
         </Card>
@@ -1519,7 +1519,7 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
 
       {/* Pendiente de atención */}
       {(pendientesDeFacturar.length>0 || vencidos.length>0) && (
-        <Card style={{marginBottom:20,borderLeft:"3px solid #f59e0b"}}>
+        <Card style={{marginBottom:20,borderLeft:"3px solid #d97706"}}>
           <div style={{color:"#92400e",fontWeight:700,fontSize:13,marginBottom:10}}>⚠ Pendiente de atención</div>
           {pendientesDeFacturar.map(p=>(
             <div key={p.id} style={{fontSize:12,color:"#475569",marginBottom:6}}>• {p.etiqueta} — sin facturar todavía</div>
@@ -1536,7 +1536,7 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
           <Card>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
               <div style={{color:"#1e293b",fontWeight:700,fontSize:13}}>👥 Profesionales — {MES_LABELS[mes]||mes}</div>
-              <div style={{color:"#ef4444",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:15}}>Total a pagar: {fp(totalHon)}</div>
+              <div style={{color:"#dc2626",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:15}}>Total a pagar: {fp(totalHon)}</div>
             </div>
             {profStats.map(({prof,total,hon,color})=>(
               <div key={prof} onClick={()=>onVerFicha&&onVerFicha(prof)}
@@ -1548,7 +1548,7 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
                   <span style={{color:"#94a3b8",fontSize:12}}>{total} sesiones</span>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{color:"#10b981",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:13}}>{fp(hon)}</span>
+                  <span style={{color:"#059669",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:13}}>{fp(hon)}</span>
                   {onVerFicha && <span style={{color:"#cbd5e1",fontSize:14}}>›</span>}
                 </div>
               </div>
@@ -1565,7 +1565,7 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
                   <Tooltip content={<TooltipCustom/>}/>
                   <Legend wrapperStyle={{fontSize:10,color:"#94a3b8"}}/>
                   <Bar dataKey={antLabel} fill="#1e3050" radius={[3,3,0,0]}/>
-                  <Bar dataKey={mesLabel} fill="#6366f1" radius={[3,3,0,0]}/>
+                  <Bar dataKey={mesLabel} fill="#4338ca" radius={[3,3,0,0]}/>
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -1587,14 +1587,14 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                     <span style={{color:col,fontSize:12,fontWeight:700}}>{prest}</span>
                     <div style={{display:"flex",gap:8,fontSize:11}}>
-                      {d.OSDE>0      && <span style={{color:"#6366f1"}}>O:{fp(d.OSDE)}</span>}
-                      {d.MEDIFE>0    && <span style={{color:"#ec4899"}}>M:{fp(d.MEDIFE)}</span>}
-                      {d.PARTICULAR>0&& <span style={{color:"#10b981"}}>P:{fp(d.PARTICULAR)}</span>}
+                      {d.OSDE>0      && <span style={{color:"#4338ca"}}>O:{fp(d.OSDE)}</span>}
+                      {d.MEDIFE>0    && <span style={{color:"#7c3aed"}}>M:{fp(d.MEDIFE)}</span>}
+                      {d.PARTICULAR>0&& <span style={{color:"#059669"}}>P:{fp(d.PARTICULAR)}</span>}
                       <span style={{color:"#1e293b",fontFamily:"'DM Mono',monospace",fontWeight:700}}>{fp(total)}</span>
                     </div>
                   </div>
                   <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:7,background:"#f8fafc"}}>
-                    {total>0&&[{v:d.OSDE,c:"#6366f1"},{v:d.MEDIFE,c:"#ec4899"},{v:d.PARTICULAR,c:"#10b981"}]
+                    {total>0&&[{v:d.OSDE,c:"#4338ca"},{v:d.MEDIFE,c:"#7c3aed"},{v:d.PARTICULAR,c:"#059669"}]
                       .map(({v,c},j)=>v>0&&<div key={j} style={{width:`${(v/total*100)}%`,background:c}}/>)}
                   </div>
                 </div>
@@ -1629,18 +1629,18 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
                   {Object.entries(porPrest).map(([prest,d],i)=>(
                     <tr key={prest}>
                       <td style={S.td}><Badge color={PIE_COLORS[i%PIE_COLORS.length]}>{prest}</Badge></td>
-                      <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#6366f1"}}>{fp(d.OSDE)}</td>
-                      <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#ec4899"}}>{fp(d.MEDIFE)}</td>
-                      <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#10b981"}}>{fp(d.PARTICULAR)}</td>
+                      <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#4338ca"}}>{fp(d.OSDE)}</td>
+                      <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#7c3aed"}}>{fp(d.MEDIFE)}</td>
+                      <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#059669"}}>{fp(d.PARTICULAR)}</td>
                       <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#1e293b"}}>{fp(d.total)}</td>
                       <td style={{...S.td,textAlign:"right",color:"#64748b"}}>{bruto>0?`${(d.total/bruto*100).toFixed(1)}%`:"—"}</td>
                     </tr>
                   ))}
                   <tr style={{background:"#eef2f7"}}>
                     <td style={{...S.td,fontWeight:700,color:"#94a3b8"}}>TOTAL</td>
-                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#6366f1"}}>{fp(porOS.OSDE)}</td>
-                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#ec4899"}}>{fp(porOS.MEDIFE)}</td>
-                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#10b981"}}>{fp(porOS.PARTICULAR)}</td>
+                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#4338ca"}}>{fp(porOS.OSDE)}</td>
+                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#7c3aed"}}>{fp(porOS.MEDIFE)}</td>
+                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#059669"}}>{fp(porOS.PARTICULAR)}</td>
                     <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:15,color:"#1e293b"}}>{fp(bruto)}</td>
                     <td style={{...S.td,textAlign:"right",color:"#64748b"}}>100%</td>
                   </tr>
@@ -1657,9 +1657,9 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
                 <YAxis tick={{fill:"#64748b",fontSize:9}} tickFormatter={v=>v>=1000000?`${(v/1000000).toFixed(1)}M`:v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
                 <Tooltip content={<TooltipCustom/>}/>
                 <Legend wrapperStyle={{fontSize:10,color:"#94a3b8"}}/>
-                <Bar dataKey="OSDE"       fill="#6366f1" radius={[3,3,0,0]}/>
-                <Bar dataKey="MEDIFE"     fill="#ec4899" radius={[3,3,0,0]}/>
-                <Bar dataKey="PARTICULAR" fill="#10b981" radius={[3,3,0,0]}/>
+                <Bar dataKey="OSDE"       fill="#4338ca" radius={[3,3,0,0]}/>
+                <Bar dataKey="MEDIFE"     fill="#7c3aed" radius={[3,3,0,0]}/>
+                <Bar dataKey="PARTICULAR" fill="#059669" radius={[3,3,0,0]}/>
               </BarChart>
             </ResponsiveContainer>
           </Card>
@@ -1679,7 +1679,7 @@ function ViewCobros({registros}) {
       <div style={{display:"flex",gap:8,marginBottom:20}}>
         {[["osde","🏦 OSDE"],["medife","💙 MEDIFE"],["particular","💵 Particulares"]].map(([id,lbl])=>(
           <button key={id} onClick={()=>setTab(id)}
-            style={{...S.btn(tab===id?"#6366f1":"#e2e8f0",12),padding:"7px 18px"}}>{lbl}</button>
+            style={{...S.btn(tab===id?"#4338ca":"#e2e8f0",12),padding:"7px 18px"}}>{lbl}</button>
         ))}
       </div>
       {tab==="osde"      && <ViewCobrosOSDE registros={registros}/>}
@@ -1790,7 +1790,7 @@ function ViewPrecios({ onPreciosUpdate }) {
 
   const inputStyle = (clave) => ({
     background: editando[clave] !== undefined ? "#fffbeb" : "#f8faff",
-    border: `1px solid ${editando[clave] !== undefined ? "#f59e0b" : "#c7d2fe"}`,
+    border: `1px solid ${editando[clave] !== undefined ? "#d97706" : "#c7d2fe"}`,
     borderRadius: 8, padding: "7px 10px", color: "#1e293b",
     fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box",
     fontFamily: "'DM Mono', monospace", fontWeight: 700,
@@ -1812,9 +1812,9 @@ function ViewPrecios({ onPreciosUpdate }) {
           <div style={{color:"#64748b",fontSize:12,marginTop:3}}>Los precios se guardan por mes — podés actualizar sin perder el historial</div>
         </div>
         <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-          {saved && <span style={{color:"#10b981",fontWeight:700,fontSize:12}}>✅ Guardado correctamente</span>}
+          {saved && <span style={{color:"#059669",fontWeight:700,fontSize:12}}>✅ Guardado correctamente</span>}
           <button onClick={guardarTodo} disabled={guardando || !hayEdiciones}
-            style={{...S.btn(hayEdiciones?"#6366f1":"#94a3b8"),opacity:hayEdiciones?1:0.6}}>
+            style={{...S.btn(hayEdiciones?"#4338ca":"#94a3b8"),opacity:hayEdiciones?1:0.6}}>
             {guardando ? "Guardando..." : `💾 Guardar cambios${hayEdiciones ? ` (${Object.keys(editando).length})` : ""}`}
           </button>
           <button onClick={()=>cargar(mes)} disabled={guardando} style={S.btn("#64748b")}>↩ Descartar</button>
@@ -1826,7 +1826,7 @@ function ViewPrecios({ onPreciosUpdate }) {
         {mesesDisp.map(m => (
           <button key={m} onClick={()=>{ if(!hayEdiciones || window.confirm("Tenés cambios sin guardar. ¿Salir igual?")) setMes(m); }}
             style={{padding:"6px 16px",borderRadius:20,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,
-              background: m===mes ? "#6366f1" : "#e0e7ff",
+              background: m===mes ? "#4338ca" : "#e0e7ff",
               color: m===mes ? "#fff" : "#4338ca",
               boxShadow: m===mes ? "0 2px 8px rgba(99,102,241,0.3)" : "none",
               transition:"all 0.15s"}}>
@@ -1879,7 +1879,7 @@ function ViewPrecios({ onPreciosUpdate }) {
                     <tr key={p.key} style={{borderBottom:"1px solid #f0f4ff",background:i%2===0?"transparent":"#f8faff"}}>
                       <td style={{...S.td}}>
                         <span style={{fontWeight:700,color:"#1e293b"}}>{p.label}</span>
-                        {p.soloRPG && <Badge color="#ec4899" style={{marginLeft:8}}>Solo RPG</Badge>}
+                        {p.soloRPG && <Badge color="#7c3aed" style={{marginLeft:8}}>Solo RPG</Badge>}
                       </td>
                       <td style={{...S.td,textAlign:"center"}}>
                         <div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"center"}}>
@@ -1942,7 +1942,7 @@ function ViewPrecios({ onPreciosUpdate }) {
             <div style={{color:"#1e293b",fontWeight:800,fontSize:14,marginBottom:16}}>💙 MEDIFE & 🎁 Regalo — {labelMes(mes)}</div>
             {[
               {clave:"medife_sesion", label:"MEDIFE — por sesión",        color:"#8b5cf6"},
-              {clave:"regalo_ingreso",label:"Ingreso por Regalo (consulta)",color:"#f59e0b"},
+              {clave:"regalo_ingreso",label:"Ingreso por Regalo (consulta)",color:"#d97706"},
             ].map(item=>(
               <div key={item.clave} style={{marginBottom:16}}>
                 <div style={{color:"#64748b",fontSize:11,fontWeight:600,marginBottom:6,letterSpacing:"0.05em",textTransform:"uppercase"}}>{item.label}</div>
@@ -1982,7 +1982,7 @@ function ViewConciliacion({registros}) {
       <div style={{display:"flex",gap:8,marginBottom:24}}>
         {[["osde","🏦 OSDE"],["medife","💜 MEDIFE"]].map(([id,lbl])=>(
           <button key={id} onClick={()=>setTabConc(id)}
-            style={{...S.btn(tabConc===id?(id==="osde"?"#6366f1":"#8b5cf6"):"#e2e8f0",13),padding:"8px 22px",fontWeight:700}}>
+            style={{...S.btn(tabConc===id?(id==="osde"?"#4338ca":"#8b5cf6"):"#e2e8f0",13),padding:"8px 22px",fontWeight:700}}>
             {lbl}
           </button>
         ))}
@@ -2124,7 +2124,7 @@ function ViewConciliacionOSDE({registros}) {
             </div>
             <input type="file" accept=".xlsx,.xls" onChange={handleArchivo} style={{display:"none"}}/>
           </label>
-          {procesando && <div style={{color:"#f59e0b",fontSize:11,marginTop:8}}>⏳ Procesando...</div>}
+          {procesando && <div style={{color:"#d97706",fontSize:11,marginTop:8}}>⏳ Procesando...</div>}
         </div>
 
         <div style={{...S.card}}>
@@ -2139,10 +2139,10 @@ function ViewConciliacionOSDE({registros}) {
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:20}}>
           {[
             {l:"DÍAS ANALIZADOS",  v:filas.length,    c:"#94a3b8"},
-            {l:"TOTAL CRM (OSDE)", v:totalCRM,        c:"#6366f1"},
+            {l:"TOTAL CRM (OSDE)", v:totalCRM,        c:"#4338ca"},
             {l:"TOTAL OSDE",       v:osdeData?totalOSDE:"—", c:"#0ea5e9"},
-            {l:"DÍAS OK",          v:diasOk,           c:"#10b981"},
-            {l:"DÍAS CON PROBLEMA",v:diasAlerta,       c:diasAlerta>0?"#ef4444":"#10b981"},
+            {l:"DÍAS OK",          v:diasOk,           c:"#059669"},
+            {l:"DÍAS CON PROBLEMA",v:diasAlerta,       c:diasAlerta>0?"#dc2626":"#059669"},
           ].map(k=>(
             <div key={k.l} style={{...S.card}}>
               <div style={{color:"#64748b",fontSize:9,letterSpacing:1,fontWeight:600}}>{k.l}</div>
@@ -2157,7 +2157,7 @@ function ViewConciliacionOSDE({registros}) {
         <div style={{...S.card}}>
           <div style={{color:"#1e293b",fontWeight:700,fontSize:13,marginBottom:14}}>
             📊 Detalle por día — {mes}
-            {!osdeData && <span style={{color:"#f59e0b",fontSize:11,fontWeight:400,marginLeft:8}}>⚠ Importá el Excel de OSDE para ver la comparación</span>}
+            {!osdeData && <span style={{color:"#d97706",fontSize:11,fontWeight:400,marginLeft:8}}>⚠ Importá el Excel de OSDE para ver la comparación</span>}
           </div>
           <div style={{overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
@@ -2175,13 +2175,13 @@ function ViewConciliacionOSDE({registros}) {
                   return (
                     <tr key={f.fecha} style={{borderBottom:"1px solid #e0e7ff",background:i%2===0?"white":"#f8faff"}}>
                       <td style={{padding:"10px 12px",color:"#1e293b",fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{f.fecha}</td>
-                      <td style={{textAlign:"center",color:"#6366f1",fontWeight:800,fontSize:15,fontFamily:"'DM Mono',monospace"}}>{f.crmOsde}</td>
+                      <td style={{textAlign:"center",color:"#4338ca",fontWeight:800,fontSize:15,fontFamily:"'DM Mono',monospace"}}>{f.crmOsde}</td>
                       <td style={{textAlign:"center",color:"#0ea5e9",fontWeight:800,fontSize:15,fontFamily:"'DM Mono',monospace"}}>
                         {f.osdeTotal !== null ? f.osdeTotal : <span style={{color:"#cbd5e1"}}>—</span>}
 
                       </td>
                       <td style={{textAlign:"center",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:15,
-                        color: f.diff===null?"#cbd5e1":f.diff>=0?"#10b981":"#ef4444"}}>
+                        color: f.diff===null?"#cbd5e1":f.diff>=0?"#059669":"#dc2626"}}>
                         {f.diff===null ? "—" : f.diff >= 0 ? (f.diff===0?"=":"+"+f.diff) : f.diff}
                       </td>
                       <td style={{textAlign:"center",color:"#64748b",fontFamily:"'DM Mono',monospace"}}>
@@ -2200,10 +2200,10 @@ function ViewConciliacionOSDE({registros}) {
                 <tfoot>
                   <tr style={{borderTop:"2px solid #dbeafe"}}>
                     <td style={{padding:"10px 12px",color:"#1e293b",fontWeight:700}}>TOTAL</td>
-                    <td style={{textAlign:"center",color:"#6366f1",fontWeight:800,fontSize:15,fontFamily:"'DM Mono',monospace"}}>{totalCRM}</td>
+                    <td style={{textAlign:"center",color:"#4338ca",fontWeight:800,fontSize:15,fontFamily:"'DM Mono',monospace"}}>{totalCRM}</td>
                     <td style={{textAlign:"center",color:"#0ea5e9",fontWeight:800,fontSize:15,fontFamily:"'DM Mono',monospace"}}>{totalOSDE}</td>
                     <td style={{textAlign:"center",fontWeight:800,fontSize:15,fontFamily:"'DM Mono',monospace",
-                      color:totalOSDE>=totalCRM?"#10b981":"#ef4444"}}>
+                      color:totalOSDE>=totalCRM?"#059669":"#dc2626"}}>
                       {totalOSDE>=totalCRM ? (totalOSDE-totalCRM===0?"=":"+")+(totalOSDE-totalCRM) : totalOSDE-totalCRM}
                     </td>
                     <td/><td/>
@@ -2216,7 +2216,7 @@ function ViewConciliacionOSDE({registros}) {
           {/* Leyenda */}
           <div style={{marginTop:16,display:"flex",gap:16,flexWrap:"wrap",borderTop:"1px solid #dbeafe",paddingTop:12}}>
             {[
-              {c:"#10b981", t:"✅ OK — CRM y OSDE coinciden exactamente"},
+              {c:"#059669", t:"✅ OK — CRM y OSDE coinciden exactamente"},
               {c:"#d97706", t:"⚠️ OSDE mayor — Puede haber diferidas o autorizaciones extra, no es problema"},
               {c:"#dc2626", t:"🚨 Problema — El CRM tiene más que OSDE: hay prestaciones NO registradas en OSDE"},
             ].map(l=>(
@@ -2378,8 +2378,8 @@ function ViewConciliacionMedife({registros}) {
             {l:"DÍAS ANALIZADOS",v:filas.length,    c:"#94a3b8"},
             {l:"TOTAL CRM",      v:totalCRM,         c:"#8b5cf6"},
             {l:"TOTAL MEDIFE",   v:medifeData?totalMedife:"—",c:"#06b6d4"},
-            {l:"DÍAS OK",        v:diasOk,           c:"#10b981"},
-            {l:"DÍAS PROBLEMA",  v:diasProblem,      c:diasProblem>0?"#ef4444":"#10b981"},
+            {l:"DÍAS OK",        v:diasOk,           c:"#059669"},
+            {l:"DÍAS PROBLEMA",  v:diasProblem,      c:diasProblem>0?"#dc2626":"#059669"},
           ].map(k=>(
             <div key={k.l} style={{background:"#f8faff",border:"1px solid #e0e7ff",borderRadius:12,padding:"14px 16px"}}>
               <div style={{color:"#64748b",fontSize:9,letterSpacing:1,fontWeight:700}}>{k.l}</div>
@@ -2393,7 +2393,7 @@ function ViewConciliacionMedife({registros}) {
         <Card>
           <div style={{color:"#1e293b",fontWeight:700,fontSize:13,marginBottom:14}}>
             📊 Detalle por día — {labelMes(mes)}
-            {!medifeData && <span style={{color:"#f59e0b",fontSize:11,fontWeight:400,marginLeft:8}}>⚠ Importá el Excel de MEDIFE para comparar</span>}
+            {!medifeData && <span style={{color:"#d97706",fontSize:11,fontWeight:400,marginLeft:8}}>⚠ Importá el Excel de MEDIFE para comparar</span>}
           </div>
           <div style={{overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
@@ -2418,7 +2418,7 @@ function ViewConciliacionMedife({registros}) {
                           {f.medPacientes !== null ? f.medPacientes : <span style={{color:"#cbd5e1"}}>—</span>}
                         </td>
                         <td style={{textAlign:"center",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:15,
-                          color:f.diff===null?"#cbd5e1":f.diff===0?"#10b981":f.diff>0?"#d97706":"#ef4444"}}>
+                          color:f.diff===null?"#cbd5e1":f.diff===0?"#059669":f.diff>0?"#d97706":"#dc2626"}}>
                           {f.diff===null?"—":f.diff===0?"=":f.diff>0?"+"+f.diff:f.diff}
                         </td>
                         <td style={{padding:"10px 12px"}}>
@@ -2429,7 +2429,7 @@ function ViewConciliacionMedife({registros}) {
                         <td style={{textAlign:"center"}}>
                           {(f.profs.length>0||f.detalle.length>0) && (
                             <button onClick={()=>setExpandida(isExp?null:f.fecha)}
-                              style={{background:isExp?"#e0e7ff":"#f1f5f9",border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,color:"#6366f1",fontWeight:700}}>
+                              style={{background:isExp?"#e0e7ff":"#f1f5f9",border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,color:"#4338ca",fontWeight:700}}>
                               {isExp?"▲":"▼"}
                             </button>
                           )}
@@ -2475,7 +2475,7 @@ function ViewConciliacionMedife({registros}) {
                     <td style={{textAlign:"center",color:"#8b5cf6",fontWeight:800,fontSize:15,fontFamily:"'DM Mono',monospace"}}>{totalCRM}</td>
                     <td style={{textAlign:"center",color:"#06b6d4",fontWeight:800,fontSize:15,fontFamily:"'DM Mono',monospace"}}>{totalMedife}</td>
                     <td style={{textAlign:"center",fontWeight:800,fontSize:15,fontFamily:"'DM Mono',monospace",
-                      color:totalMedife>=totalCRM?"#10b981":"#ef4444"}}>
+                      color:totalMedife>=totalCRM?"#059669":"#dc2626"}}>
                       {totalMedife>=totalCRM?(totalMedife-totalCRM===0?"=":"+"+(totalMedife-totalCRM)):totalMedife-totalCRM}
                     </td>
                     <td/><td/>
@@ -2486,7 +2486,7 @@ function ViewConciliacionMedife({registros}) {
           </div>
           <div style={{marginTop:16,display:"flex",gap:16,flexWrap:"wrap",borderTop:"1px solid #dbeafe",paddingTop:12}}>
             {[
-              {c:"#10b981",t:"✅ OK — CRM y MEDIFE coinciden"},
+              {c:"#059669",t:"✅ OK — CRM y MEDIFE coinciden"},
               {c:"#d97706",t:"⚠️ MEDIFE mayor — Puede haber reingresos"},
               {c:"#dc2626",t:"🚨 Problema — CRM tiene más: atenciones no registradas en MEDIFE"},
             ].map(l=>(
@@ -2660,7 +2660,7 @@ function ViewCobrosMedife() {
               <div style={{color:mesFiltro===m?"rgba(255,255,255,0.7)":"#7c3aed",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:5}}>
                 COBRO {labelMes(m).toUpperCase()}
               </div>
-              <div style={{color:mesFiltro===m?"#fff":"#10b981",fontSize:20,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{fp(d.totalConIVA)}</div>
+              <div style={{color:mesFiltro===m?"#fff":"#059669",fontSize:20,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{fp(d.totalConIVA)}</div>
               <div style={{color:mesFiltro===m?"rgba(255,255,255,0.6)":"#64748b",fontSize:11,marginTop:3}}>
                 {d.pacientes} pacientes · {d.facturas} factura{d.facturas!==1?"s":""}
               </div>
@@ -2697,7 +2697,7 @@ function ViewCobrosMedife() {
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4,flexWrap:"wrap"}}>
                 <span style={{color:"#1e293b",fontWeight:800,fontSize:15}}>{c.factNro}</span>
                 <Badge color="#8b5cf6">MEDIFE</Badge>
-                <Badge color="#10b981">Impacta {labelMes(c.mesImpacto)}</Badge>
+                <Badge color="#059669">Impacta {labelMes(c.mesImpacto)}</Badge>
               </div>
               <div style={{color:"#64748b",fontSize:12}}>
                 Emitida: <span style={{color:"#94a3b8"}}>{c.fechaEmision}</span>
@@ -2707,7 +2707,7 @@ function ViewCobrosMedife() {
             <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
               <div style={{textAlign:"right"}}>
                 <div style={{color:"#64748b",fontSize:10,marginBottom:3}}>TOTAL CON IVA</div>
-                <div style={{color:"#10b981",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:20}}>{fp(c.totalConIVA)}</div>
+                <div style={{color:"#059669",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:20}}>{fp(c.totalConIVA)}</div>
               </div>
               <div style={{display:"flex",gap:6}}>
                 <button onClick={()=>abrirEditar(c)}
@@ -2723,7 +2723,7 @@ function ViewCobrosMedife() {
               {lbl:"Pacientes obligatorios",val:c.pacientesObligatorios,color:"#8b5cf6"},
               {lbl:"Pacientes directos",val:c.pacientesDirectos,color:"#a78bfa"},
               {lbl:"Total pacientes",val:c.totalPacientes,color:"#1e293b"},
-              {lbl:"Precio unitario",val:fp(c.precioUnitario),color:"#f59e0b"},
+              {lbl:"Precio unitario",val:fp(c.precioUnitario),color:"#d97706"},
             ].map(({lbl,val,color})=>(
               <div key={lbl} style={{background:"#f8faff",borderRadius:8,padding:"10px 12px",textAlign:"center"}}>
                 <div style={{color:"#64748b",fontSize:10,marginBottom:4}}>{lbl}</div>
@@ -2735,9 +2735,9 @@ function ViewCobrosMedife() {
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
             {[
               {lbl:"Exento",val:fp(c.importeExento),color:"#94a3b8"},
-              {lbl:"Gravado",val:fp(c.importeGravado),color:"#6366f1"},
-              {lbl:"IVA 10.5%",val:fp(c.iva),color:"#f59e0b"},
-              {lbl:"Total c/IVA",val:fp(c.totalConIVA),color:"#10b981"},
+              {lbl:"Gravado",val:fp(c.importeGravado),color:"#4338ca"},
+              {lbl:"IVA 10.5%",val:fp(c.iva),color:"#d97706"},
+              {lbl:"Total c/IVA",val:fp(c.totalConIVA),color:"#059669"},
             ].map(({lbl,val,color})=>(
               <div key={lbl} style={{background:"#f8faff",borderRadius:8,padding:"10px 12px",textAlign:"center"}}>
                 <div style={{color:"#64748b",fontSize:10,marginBottom:4}}>{lbl}</div>
@@ -2800,7 +2800,7 @@ function ViewCobrosMedife() {
               <div><label style={S.label}>IVA 10.5%</label>
                 <input type="number" style={S.input} value={form.iva} onChange={e=>setForm(f=>({...f,iva:e.target.value}))}/></div>
               <div><label style={S.label}>TOTAL CON IVA ← el que paga MEDIFE</label>
-                <input type="number" style={{...S.input,border:"2px solid #10b981",background:"#f0fdf4"}} value={form.totalConIVA} onChange={e=>setForm(f=>({...f,totalConIVA:e.target.value}))}/></div>
+                <input type="number" style={{...S.input,border:"2px solid #059669",background:"#f0fdf4"}} value={form.totalConIVA} onChange={e=>setForm(f=>({...f,totalConIVA:e.target.value}))}/></div>
               <div style={{gridColumn:"1/-1"}}>
                 <label style={S.label}>Notas</label>
                 <input style={S.input} value={form.notas} onChange={e=>setForm(f=>({...f,notas:e.target.value}))} placeholder="Ej: Acreditado 15/01/2026"/>
@@ -2839,31 +2839,31 @@ function ViewCobrosParticular() {
 
   return (
     <div>
-      <Card style={{marginBottom:20,background:"#ffffff",borderLeft:"3px solid #10b981"}}>
+      <Card style={{marginBottom:20,background:"#ffffff",borderLeft:"3px solid #059669"}}>
         <div style={{color:"#94a3b8",fontSize:13,lineHeight:1.8}}>
-          <strong style={{color:"#10b981"}}>Particulares</strong> — pagos directos de pacientes sin obra social. Se registran al momento del cobro.<br/>
+          <strong style={{color:"#059669"}}>Particulares</strong> — pagos directos de pacientes sin obra social. Se registran al momento del cobro.<br/>
           <span style={{color:"#64748b",fontSize:12}}>Incluye pacientes sin cobertura, tratamientos especiales y sesiones fuera de convenio.</span>
         </div>
       </Card>
 
       <div style={{display:"flex",gap:12,marginBottom:20}}>
-        <div style={{background:"#f8faff",border:"1px solid #10b98133",borderRadius:12,padding:"14px 18px",flex:1}}>
+        <div style={{background:"#f8faff",border:"1px solid #05966933",borderRadius:12,padding:"14px 18px",flex:1}}>
           <div style={{color:"#64748b",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:4}}>COBRADO PARTICULAR</div>
-          <div style={{color:"#10b981",fontSize:22,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{fp(totalMes)}</div>
+          <div style={{color:"#059669",fontSize:22,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{fp(totalMes)}</div>
         </div>
-        <div style={{background:"#f8faff",border:"1px solid #10b98133",borderRadius:12,padding:"14px 18px",flex:1}}>
+        <div style={{background:"#f8faff",border:"1px solid #05966933",borderRadius:12,padding:"14px 18px",flex:1}}>
           <div style={{color:"#64748b",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:4}}>PACIENTES</div>
           <div style={{color:"#1e293b",fontSize:22,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{totalPacientes}</div>
         </div>
         <div style={{display:"flex",alignItems:"center"}}>
-          <button onClick={()=>setShowForm(true)} style={S.btn("#10b981")}>＋ Registrar cobro</button>
+          <button onClick={()=>setShowForm(true)} style={S.btn("#059669")}>＋ Registrar cobro</button>
         </div>
       </div>
 
       {cobros.length===0&&(
         <Card style={{textAlign:"center",padding:"3rem",color:"#64748b"}}>
           Sin registros de cobros particulares.<br/>
-          <button onClick={()=>setShowForm(true)} style={{...S.btn("#10b981",12),marginTop:12}}>＋ Registrar primero</button>
+          <button onClick={()=>setShowForm(true)} style={{...S.btn("#059669",12),marginTop:12}}>＋ Registrar primero</button>
         </Card>
       )}
 
@@ -2873,11 +2873,11 @@ function ViewCobrosParticular() {
             <div style={{color:"#1e293b",fontWeight:700,fontSize:13}}>{c.descripcion||"Cobro particular"}</div>
             <div style={{color:"#64748b",fontSize:12,marginTop:2}}>
               {c.fecha} · {c.prof} · {c.pacientes} paciente{c.pacientes!==1?"s":""}
-              {c.mesImpacto&&<span style={{marginLeft:8,color:"#f59e0b"}}>{MES_LABELS[c.mesImpacto]||c.mesImpacto}</span>}
+              {c.mesImpacto&&<span style={{marginLeft:8,color:"#d97706"}}>{MES_LABELS[c.mesImpacto]||c.mesImpacto}</span>}
             </div>
             {c.notas&&<div style={{color:"#64748b",fontSize:11,marginTop:2,fontStyle:"italic"}}>{c.notas}</div>}
           </div>
-          <div style={{color:"#10b981",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:18,textAlign:"right"}}>
+          <div style={{color:"#059669",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:18,textAlign:"right"}}>
             {fp(c.monto)}
           </div>
         </Card>
@@ -2905,7 +2905,7 @@ function ViewCobrosParticular() {
               <div style={{gridColumn:"1/-1"}}><label style={S.label}>Notas</label><input style={S.input} value={form.notas} onChange={e=>setForm(f=>({...f,notas:e.target.value}))}/></div>
             </div>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={guardar} style={S.btn("#10b981")}>Guardar</button>
+              <button onClick={guardar} style={S.btn("#059669")}>Guardar</button>
               <button onClick={()=>setShowForm(false)} style={S.btn("#e2e8f0")}>Cancelar</button>
             </div>
           </Card>
@@ -2988,7 +2988,7 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
     osde:a.osde+d.osde, medife:a.medife+d.medife, particular:a.particular+d.particular, regalo:a.regalo+d.regalo
   }),{osde:0,medife:0,particular:0,regalo:0});
 
-  const colorSel = COLOR_POR_PROFESIONAL[profSel]||"#6366f1";
+  const colorSel = COLOR_POR_PROFESIONAL[profSel]||"#4338ca";
 
   async function eliminar(id) {
     if(!confirm("¿Eliminar este registro?")) return;
@@ -3058,9 +3058,9 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
         {[
           {label:"OSDE",       valor:totales.osde,       color:"#3b82f6", bg:"#eff6ff"},
           {label:"MEDIFE",     valor:totales.medife,     color:"#8b5cf6", bg:"#f5f3ff"},
-          {label:"PARTICULAR", valor:totales.particular, color:"#10b981", bg:"#f0fdf4"},
-          {label:"🎁 REGALO",  valor:totales.regalo,     color:"#f59e0b", bg:"#fffbeb"},
-          {label:"AUSENTES",   valor:totales.ausentes,   color:"#ef4444", bg:"#fef2f2"},
+          {label:"PARTICULAR", valor:totales.particular, color:"#059669", bg:"#f0fdf4"},
+          {label:"🎁 REGALO",  valor:totales.regalo,     color:"#d97706", bg:"#fffbeb"},
+          {label:"AUSENTES",   valor:totales.ausentes,   color:"#dc2626", bg:"#fef2f2"},
           {label:"TOTAL",      valor:totales.total,      color:"#0f172a", bg:"#f8fafc",grande:true},
         ].map(k=>(
           <div key={k.label} style={{background:k.bg,borderRadius:16,padding:"16px 18px",
@@ -3079,7 +3079,7 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
             <h3 style={{fontWeight:700,color:"#1e293b",margin:0,fontSize:15}}>👥 Detalle por profesional — {nombreMesLocal(mes)}</h3>
             <p style={{color:"#94a3b8",fontSize:11,margin:"4px 0 0"}}>Clic en un profesional para ver y editar sus registros</p>
           </div>
-          <button onClick={()=>{setShowAdd(true);}} style={{...S.btn("#10b981",12)}}>＋ Agregar registro</button>
+          <button onClick={()=>{setShowAdd(true);}} style={{...S.btn("#059669",12)}}>＋ Agregar registro</button>
         </div>
         {statsPorProf.length===0 ? (
           <div style={{textAlign:"center",padding:"2rem",color:"#94a3b8"}}>Sin registros para {nombreMesLocal(mes)}</div>
@@ -3098,20 +3098,20 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
                 <tr key={p.prof}
                   onClick={()=>setProfSel(profSel===p.prof?null:p.prof)}
                   style={{borderBottom:"1px solid #f8fafc",cursor:"pointer",
-                    background:profSel===p.prof?(COLOR_POR_PROFESIONAL[p.prof]||"#6366f1")+"18":i%2===0?"white":"#fafafa"}}>
+                    background:profSel===p.prof?(COLOR_POR_PROFESIONAL[p.prof]||"#4338ca")+"18":i%2===0?"white":"#fafafa"}}>
                   <td style={{padding:"10px 12px"}}>
                     <span style={{display:"inline-flex",alignItems:"center",gap:8}}>
                       <span style={{width:10,height:10,borderRadius:"50%",background:COLOR_POR_PROFESIONAL[p.prof]||"#94a3b8",display:"inline-block"}}/>
-                      <strong style={{color:profSel===p.prof?(COLOR_POR_PROFESIONAL[p.prof]||"#6366f1"):"#1e293b"}}>{p.prof}</strong>
+                      <strong style={{color:profSel===p.prof?(COLOR_POR_PROFESIONAL[p.prof]||"#4338ca"):"#1e293b"}}>{p.prof}</strong>
                       <span style={{fontSize:10,color:"#94a3b8"}}>{profSel===p.prof?"▲":"▼"}</span>
                     </span>
                   </td>
                   <td style={{textAlign:"center",color:"#3b82f6",fontWeight:700}}>{p.osde||"—"}</td>
                   <td style={{textAlign:"center",color:"#8b5cf6",fontWeight:700}}>{p.medife||"—"}</td>
                   <td style={{textAlign:"center",color:"#475569",fontWeight:600}}>{p.osde+p.medife||"—"}</td>
-                  <td style={{textAlign:"center",color:"#10b981",fontWeight:700}}>{p.particular||"—"}</td>
-                  <td style={{textAlign:"center",color:"#f59e0b",fontWeight:700}}>{p.regalo||"—"}</td>
-                  <td style={{textAlign:"center",color:"#ef4444",fontWeight:700}}>{p.ausentes||"—"}</td>
+                  <td style={{textAlign:"center",color:"#059669",fontWeight:700}}>{p.particular||"—"}</td>
+                  <td style={{textAlign:"center",color:"#d97706",fontWeight:700}}>{p.regalo||"—"}</td>
+                  <td style={{textAlign:"center",color:"#dc2626",fontWeight:700}}>{p.ausentes||"—"}</td>
                   <td style={{textAlign:"center"}}>
                     <span style={{background:"#f1f5f9",borderRadius:8,padding:"3px 10px",fontWeight:800,color:"#1e293b"}}>{p.total}</span>
                   </td>
@@ -3126,9 +3126,9 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
                 <td style={{textAlign:"center",fontWeight:700,color:"#3b82f6"}}>{totales.osde}</td>
                 <td style={{textAlign:"center",fontWeight:700,color:"#8b5cf6"}}>{totales.medife}</td>
                 <td style={{textAlign:"center",fontWeight:700,color:"#475569"}}>{totales.osde+totales.medife}</td>
-                <td style={{textAlign:"center",fontWeight:700,color:"#10b981"}}>{totales.particular}</td>
-                <td style={{textAlign:"center",fontWeight:700,color:"#f59e0b"}}>{totales.regalo}</td>
-                <td style={{textAlign:"center",fontWeight:700,color:"#ef4444"}}>{totales.ausentes}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#059669"}}>{totales.particular}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#d97706"}}>{totales.regalo}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#dc2626"}}>{totales.ausentes}</td>
                 <td style={{textAlign:"center"}}>
                   <span style={{background:"#0f172a",color:"white",borderRadius:8,padding:"4px 10px",fontWeight:800}}>{totales.total}</span>
                 </td>
@@ -3153,8 +3153,8 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
                 {[
                   {l:"OSDE",   v:totDet.osde,       c:"#3b82f6"},
                   {l:"MEDIFE", v:totDet.medife,      c:"#8b5cf6"},
-                  {l:"PART.",  v:totDet.particular,  c:"#10b981"},
-                  ...(totDet.regalo>0?[{l:"REGALO",v:totDet.regalo,c:"#f59e0b"}]:[]),
+                  {l:"PART.",  v:totDet.particular,  c:"#059669"},
+                  ...(totDet.regalo>0?[{l:"REGALO",v:totDet.regalo,c:"#d97706"}]:[]),
                   {l:"TOTAL",  v:totDet.osde+totDet.medife+totDet.particular+totDet.regalo, c:colorSel},
                 ].map(x=>(
                   <div key={x.l} style={{textAlign:"center"}}>
@@ -3165,7 +3165,7 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
               </div>
             </div>
             <button onClick={()=>{setFormAdd(f=>({...f,prof:profSel}));setShowAdd(true);}}
-              style={{...S.btn("#10b981",12)}}>＋ Agregar día</button>
+              style={{...S.btn("#059669",12)}}>＋ Agregar día</button>
           </div>
 
           {diasDetalle.length===0 ? (
@@ -3195,7 +3195,7 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
                         </td>
                         <td style={{textAlign:"center",color:"#3b82f6",fontWeight:700}}>{d.osde||"—"}</td>
                         <td style={{textAlign:"center",color:"#8b5cf6",fontWeight:700}}>{d.medife||"—"}</td>
-                        <td style={{textAlign:"center",color:"#10b981",fontWeight:700}}>{d.particular||"—"}</td>
+                        <td style={{textAlign:"center",color:"#059669",fontWeight:700}}>{d.particular||"—"}</td>
                         <td style={{textAlign:"center"}}>
                           {d.regalo>0
                             ? <span style={{background:"#fffbeb",color:"#d97706",borderRadius:6,padding:"2px 8px",fontWeight:700,fontSize:12}}>{d.regalo}</span>
@@ -3228,8 +3228,8 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
                     <td style={{padding:"10px",fontWeight:800,color:"#1e293b"}}>TOTAL</td>
                     <td style={{textAlign:"center",fontWeight:800,color:"#3b82f6"}}>{totDet.osde}</td>
                     <td style={{textAlign:"center",fontWeight:800,color:"#8b5cf6"}}>{totDet.medife}</td>
-                    <td style={{textAlign:"center",fontWeight:800,color:"#10b981"}}>{totDet.particular}</td>
-                    <td style={{textAlign:"center",fontWeight:800,color:"#f59e0b"}}>{totDet.regalo||"—"}</td>
+                    <td style={{textAlign:"center",fontWeight:800,color:"#059669"}}>{totDet.particular}</td>
+                    <td style={{textAlign:"center",fontWeight:800,color:"#d97706"}}>{totDet.regalo||"—"}</td>
                     <td style={{textAlign:"center"}}>
                       <span style={{background:colorSel,color:"white",borderRadius:6,padding:"3px 10px",fontWeight:800}}>
                         {totDet.osde+totDet.medife+totDet.particular+totDet.regalo}
@@ -3263,7 +3263,7 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
             </div>
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>guardarEdicion(showEdit)} disabled={guardando}
-                style={S.btn(guardando?"#64748b":"#6366f1")}>{guardando?"Guardando...":"Guardar cambios"}</button>
+                style={S.btn(guardando?"#64748b":"#4338ca")}>{guardando?"Guardando...":"Guardar cambios"}</button>
               <button onClick={()=>setShowEdit(null)} style={S.btn("#e2e8f0")}>Cancelar</button>
             </div>
           </div>
@@ -3299,7 +3299,7 @@ function ViewControlDiarioAdmin({registros, setRegistros, onRefresh}) {
             </div>
             <div style={{display:"flex",gap:10}}>
               <button onClick={guardarNuevo} disabled={guardando}
-                style={S.btn(guardando?"#64748b":"#10b981")}>{guardando?"Guardando...":"Guardar"}</button>
+                style={S.btn(guardando?"#64748b":"#059669")}>{guardando?"Guardando...":"Guardar"}</button>
               <button onClick={()=>setShowAdd(false)} style={S.btn("#e2e8f0")}>Cancelar</button>
             </div>
           </div>
@@ -3389,7 +3389,7 @@ export default function RavaCRM({ user, onLogout }) {
 
       <div style={{background:"linear-gradient(135deg,#0d2347,#1e3a6e)",borderBottom:"1px solid #dbeafe",padding:"0 24px",display:"flex",alignItems:"center",gap:16,height:54}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:32,height:32,borderRadius:8,background:"linear-gradient(135deg,#6366f1,#ec4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🏥</div>
+          <div style={{width:32,height:32,borderRadius:8,background:"linear-gradient(135deg,#4338ca,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🏥</div>
           <div>
             <div style={{color:"#f1f5f9",fontWeight:800,fontSize:14,lineHeight:1.1}}>Kinesiología Rava</div>
             <div style={{color:"#cbd5e1",fontSize:9,letterSpacing:1.5}}>CRM · GESTIÓN INTERNA</div>
@@ -3405,14 +3405,14 @@ export default function RavaCRM({ user, onLogout }) {
           {VIEWS.map(v=>(
             <button key={v.id} onClick={()=>setView(v.id)}
               style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:8,border:"none",cursor:"pointer",textAlign:"left",
-                background:view===v.id?"#dbeafe":"transparent",color:view===v.id?"#6366f1":"#64748b",fontWeight:view===v.id?700:400,fontSize:13,fontFamily:"inherit"}}>
+                background:view===v.id?"#dbeafe":"transparent",color:view===v.id?"#4338ca":"#64748b",fontWeight:view===v.id?700:400,fontSize:13,fontFamily:"inherit"}}>
               <span>{v.icon}</span>{v.label}
             </button>
           ))}
           <div style={{flex:1}}/>
           <div style={{background:"#ffffff",borderRadius:10,padding:"12px 14px",border:"1px solid #dbeafe"}}>
             <div style={{color:"#cbd5e1",fontSize:9,letterSpacing:1,marginBottom:5}}>REGISTROS {(MES_LABELS[mesActual]||mesActual).split(" ")[0].toUpperCase()}</div>
-            <div style={{color:"#6366f1",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:22}}>
+            <div style={{color:"#4338ca",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:22}}>
               {cargando ? "..." : registrosMesActual.length}
             </div>
             <button onClick={cargarDesdeSupabase} title="Actualizar desde Supabase"
