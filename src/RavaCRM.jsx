@@ -1236,7 +1236,7 @@ function ViewLiquidacion({registros,setRegistros,precios}) {
                   <td style={{...S.td,textAlign:"right"}}><EN val={medife} onChange={v=>setOv(prof,"medife",v)} color={color}/></td>
                   <td style={{...S.td,textAlign:"right",color:isDuena?"#94a3b8":"#475569",fontWeight:700}}>{prepaga}</td>
                   <td style={{...S.td,textAlign:"right"}}>
-                    {isDuena||isPaula?<span style={{color:"#cbd5e1"}}>—</span>:<EN val={particular} onChange={v=>setOv(prof,"particular",v)} color={color}/>}
+                    {isPaula?<span style={{color:"#cbd5e1"}}>—</span>:<EN val={particular} onChange={v=>setOv(prof,"particular",v)} color={color}/>}
                   </td>
                   <td style={{...S.td,textAlign:"right"}}>
                     {isDuena?<span style={{color:"#cbd5e1"}}>—</span>:<EN val={reg} onChange={v=>setRegalos(r=>({...r,[`${mes}_${prof}`]:parseInt(v)||0}))} color="#d97706"/>}
