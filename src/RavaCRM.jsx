@@ -1270,11 +1270,151 @@ function ViewLiquidacion({registros,setRegistros,precios}) {
 }
 
 // ─── VISTA: DASHBOARD ─────────────────────────────────────────────────────────
-function ViewDashboard({registros, precios}) {
+const mesDeFecha = (f) => f ? f.slice(0,7) : null;
+const hoyISO = () => new Date().toISOString().slice(0,10);
+
+// ─── VISTA: FICHA DE PROFESIONAL ───────────────────────────────────────────────
+function ViewFichaProfesional({prof, registros, precios, pagosProfesionales=[], onVolver}) {
+  const [mes, setMes] = useState(getMesActual());
+  const mesesDisp = Array.from({length:6},(_,i)=>{
+    const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-i);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+  });
+  const color = COLOR_POR_PROFESIONAL[prof] || "#6366f1";
+
+  const res = useMemo(()=>calcResumen(registros,mes),[registros,mes]);
+  const d = res[prof] || {osde:0,medife:0,particular:0,regalo:0};
+  const sesiones = d.osde+d.medife+d.particular+(d.regalo||0);
+  const honGenerado = useMemo(()=>calcHonorario(prof,d,precios),[prof,d,precios]);
+  const pago = pagosProfesionales.find(p=>p.mes===mes && p.profesional===prof);
+  const honPagado = pago ? pago.importe_pagado : null;
+  const diferencia = honPagado!=null ? honGenerado-honPagado : null;
+
+  const evolucion = mesesDisp.slice().reverse().map(m=>{
+    const r = calcResumen(registros,m)[prof] || {osde:0,medife:0,particular:0,regalo:0};
+    const hon = calcHonorario(prof,r,precios);
+    const total = r.osde+r.medife+r.particular+(r.regalo||0);
+    return {mes:(MES_LABELS[m]||m).slice(0,3), Sesiones:total, Honorario:Math.round(hon)};
+  });
+
+  const diasMes = useMemo(()=>{
+    const map={};
+    registros.filter(r=>r.mes===mes && r.prof===prof).forEach(r=>{
+      const k=r.dia||"sin día";
+      if(!map[k]) map[k]={dia:k,osde:0,medife:0,particular:0,regalo:0,notas:[]};
+      map[k].osde+=r.osde||0; map[k].medife+=r.medife||0; map[k].particular+=r.particular||0; map[k].regalo+=r.regalo||0;
+      if(r.notas) map[k].notas.push(r.notas);
+    });
+    return Object.values(map).sort((a,b)=>{
+      const [da,ma]=a.dia.split("/"); const [db,mb]=b.dia.split("/");
+      return (ma||"").localeCompare(mb||"") || (da||"").localeCompare(db||"");
+    });
+  },[registros,mes,prof]);
+
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+        <button onClick={onVolver} style={{background:"#f1f5f9",border:"none",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:12,color:"#64748b",fontFamily:"inherit"}}>← Volver</button>
+        <div style={{width:12,height:12,borderRadius:"50%",background:color}}/>
+        <h1 style={{color:"#1e293b",fontSize:19,fontWeight:800,margin:0}}>{prof}</h1>
+        <div style={{flex:1}}/>
+        <select value={mes} onChange={e=>setMes(e.target.value)} style={{...S.input,width:160}}>
+          {mesesDisp.map(m=><option key={m} value={m}>{MES_LABELS[m]||m}</option>)}
+        </select>
+      </div>
+
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
+        {[
+          {label:"SESIONES",         val:sesiones,   color:"#1e293b", fmt:v=>v},
+          {label:"HONORARIO GENERADO", val:honGenerado, color:"#6366f1", fmt:fp},
+          {label:"HONORARIO PAGADO", val:honPagado,  color:"#10b981", fmt:v=>v==null?"sin registrar":fp(v)},
+          {label:"DIFERENCIA",       val:diferencia, color:diferencia&&diferencia!==0?"#ef4444":"#94a3b8", fmt:v=>v==null?"—":fp(v)},
+        ].map(({label,val,color:c,fmt})=>(
+          <div key={label} style={{background:"#f8faff",border:`1px solid ${c}28`,borderRadius:12,padding:"14px 16px",flex:1,minWidth:140}}>
+            <div style={{color:"#64748b",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:5}}>{label}</div>
+            <div style={{color:c,fontSize:18,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{fmt(val)}</div>
+          </div>
+        ))}
+      </div>
+
+      <Card style={{marginBottom:20}}>
+        <div style={{color:"#64748b",fontSize:12}}>
+          OSDE <b style={{color:"#1e293b"}}>{d.osde}</b> · MEDIFE <b style={{color:"#1e293b"}}>{d.medife}</b> ·
+          {" "}Particular <b style={{color:"#1e293b"}}>{d.particular}</b> · Regalo <b style={{color:"#1e293b"}}>{d.regalo||0}</b>
+        </div>
+      </Card>
+
+      <Card style={{marginBottom:20}}>
+        <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>📊 Evolución (6 meses)</div>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={evolucion} margin={{top:5,right:20,bottom:5,left:10}}>
+            <XAxis dataKey="mes" tick={{fill:"#64748b",fontSize:11}}/>
+            <YAxis tick={{fill:"#64748b",fontSize:9}}/>
+            <Tooltip/>
+            <Legend wrapperStyle={{fontSize:10,color:"#94a3b8"}}/>
+            <Bar dataKey="Sesiones" fill={color} radius={[3,3,0,0]}/>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card>
+        <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>📋 Detalle diario — {MES_LABELS[mes]||mes}</div>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead>
+              <tr>{["DÍA","OSDE","MEDIFE","PARTICULAR","REGALO","TOTAL","NOTAS"].map(h=>(
+                <th key={h} style={{...S.th,textAlign:h==="DÍA"||h==="NOTAS"?"left":"right"}}>{h}</th>
+              ))}</tr>
+            </thead>
+            <tbody>
+              {diasMes.map(row=>{
+                const total=row.osde+row.medife+row.particular+row.regalo;
+                return (
+                  <tr key={row.dia}>
+                    <td style={{...S.td,fontWeight:700,color:"#1e293b"}}>{row.dia}</td>
+                    <td style={{...S.td,textAlign:"right",color:"#6366f1"}}>{row.osde}</td>
+                    <td style={{...S.td,textAlign:"right",color:"#ec4899"}}>{row.medife}</td>
+                    <td style={{...S.td,textAlign:"right",color:"#10b981"}}>{row.particular}</td>
+                    <td style={{...S.td,textAlign:"right",color:"#f59e0b"}}>{row.regalo}</td>
+                    <td style={{...S.td,textAlign:"right",fontWeight:700}}>{total}</td>
+                    <td style={{...S.td,color:"#94a3b8",fontSize:11}}>{[...new Set(row.notas)].join(" · ")}</td>
+                  </tr>
+                );
+              })}
+              {diasMes.length===0 && (
+                <tr><td colSpan={7} style={{...S.td,textAlign:"center",color:"#94a3b8"}}>Sin registros para {MES_LABELS[mes]||mes}</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVerFicha}) {
   const mesesDisp = [...new Set(registros.map(r=>r.mes))].sort().reverse();
   if(!mesesDisp.includes(getMesActual())) mesesDisp.unshift(getMesActual());
   const [mes, setMes] = useState(getMesActual());
   const [vista, setVista] = useState("profesional");
+
+  const nombreOS = (id) => obrasSociales.find(o=>o.id===id)?.nombre || "?";
+  const periodosDelMes = useMemo(()=>periodos.filter(p=>mesDeFecha(p.fecha_hasta)===mes),[periodos,mes]);
+  const facturadoReal  = periodosDelMes.reduce((s,p)=>s+(p.importe_facturado||0),0);
+  const cobradoReal    = periodosDelMes.reduce((s,p)=>s+(p.importe_cobrado||0),0);
+  const pendienteReal  = facturadoReal - cobradoReal;
+  const porOSReal = useMemo(()=>{
+    const acc={};
+    periodosDelMes.forEach(p=>{
+      const nombre=nombreOS(p.obra_social_id);
+      if(!acc[nombre]) acc[nombre]={facturado:0,cobrado:0};
+      acc[nombre].facturado+=p.importe_facturado||0;
+      acc[nombre].cobrado+=p.importe_cobrado||0;
+    });
+    return acc;
+  },[periodosDelMes,obrasSociales]);
+  const pendientesDeFacturar = useMemo(()=>periodos.filter(p=>!p.numero_factura),[periodos]);
+  const vencidos = useMemo(()=>periodos.filter(p=>p.numero_factura && p.estado!=="cobrado_total" && p.fecha_cobro_estimada && p.fecha_cobro_estimada<hoyISO()),[periodos]);
 
   const idxMes = mesesDisp.indexOf(mes);
   const mesAnt  = mesesDisp[idxMes+1] || null;
@@ -1333,124 +1473,86 @@ function ViewDashboard({registros, precios}) {
         </div>
       </div>
 
-      {/* KPIs con MEDIFE */}
-      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
+      {/* ¿Cómo viene el mes? — KPI reales del módulo Cobros */}
+      <div style={{color:"#64748b",fontSize:11,fontWeight:700,letterSpacing:1,marginBottom:8}}>¿CÓMO VIENE {(MES_LABELS[mes]||mes).toUpperCase()}?</div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
         {[
-          {label:"INGRESO BRUTO",      val:bruto,           color:"#6366f1", dlt:delta(bruto,brutoAnt)},
-          {label:"HONORARIOS A PAGAR", val:totalHon,        color:"#ef4444", dlt:delta(totalHon,totalHonAnt)},
-          {label:"OSDE (estimado)",    val:porOS.OSDE,      color:"#6366f1", dlt:delta(porOS.OSDE,porOSAnt.OSDE)},
-          {label:"MEDIFE (estimado)",  val:porOS.MEDIFE,    color:"#ec4899", dlt:delta(porOS.MEDIFE,porOSAnt.MEDIFE)},
-          {label:"PARTICULAR",         val:porOS.PARTICULAR,color:"#10b981", dlt:delta(porOS.PARTICULAR,porOSAnt.PARTICULAR)},
-        ].map(({label,val,color,dlt})=>(
-          <div key={label} style={{background:"#f8faff",border:`1px solid ${color}28`,borderRadius:12,padding:"14px 16px",flex:1,minWidth:120}}>
-            <div style={{color:"#64748b",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:5}}>{label}</div>
-            <div style={{color,fontSize:18,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{fp(val)}</div>
-            {dlt&&mesAnt&&<div style={{color:dlt.color,fontSize:11,marginTop:3}}>{dlt.arrow} {dlt.pct}% vs {(MES_LABELS[mesAnt]||mesAnt).slice(0,3)}</div>}
+          {label:"FACTURADO",       val:facturadoReal, color:"#6366f1"},
+          {label:"COBRADO",         val:cobradoReal,   color:"#10b981"},
+          {label:"PENDIENTE",       val:pendienteReal, color:"#f59e0b"},
+          {label:"HONORARIOS A PAGAR", val:totalHon,    color:"#ef4444"},
+        ].map(({label,val,color})=>(
+          <div key={label} style={{background:"#f8faff",border:`1px solid ${color}28`,borderRadius:12,padding:"16px 18px",flex:1,minWidth:150}}>
+            <div style={{color:"#64748b",fontSize:10,fontWeight:700,letterSpacing:1,marginBottom:6}}>{label}</div>
+            <div style={{color,fontSize:22,fontWeight:800,fontFamily:"'DM Mono',monospace"}}>{fp(val)}</div>
           </div>
         ))}
       </div>
+      {periodosDelMes.length===0 && (
+        <div style={{background:"#f59e0b0d",border:"1px solid #f59e0b33",borderRadius:10,padding:"10px 16px",marginBottom:16,color:"#b45309",fontSize:12}}>
+          Todavía no hay períodos de liquidación cargados para {MES_LABELS[mes]||mes} — Facturado/Cobrado/Pendiente se van a completar a medida que se carguen los trámites y facturas correspondientes.
+        </div>
+      )}
 
-      {/* Barra proporcional OSDE/MEDIFE/PARTICULAR */}
-      <Card style={{marginBottom:20,background:"#ffffff"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginBottom:12}}>
-          <div style={{color:"#64748b",fontSize:11,fontWeight:700,letterSpacing:1}}>COMPOSICIÓN — {MES_LABELS[mes]||mes}</div>
-          <div style={{display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}}>
-            {[{lbl:"OSDE",val:porOS.OSDE,color:"#6366f1"},{lbl:"MEDIFE",val:porOS.MEDIFE,color:"#ec4899"},{lbl:"PARTICULAR",val:porOS.PARTICULAR,color:"#10b981"}].map(({lbl,val,color})=>(
-              <div key={lbl} style={{display:"flex",alignItems:"center",gap:6}}>
-                <div style={{width:8,height:8,borderRadius:"50%",background:color}}/>
-                <span style={{color:"#64748b",fontSize:11}}>{lbl}</span>
-                <span style={{color,fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:13}}>{fp(val)}</span>
-                <span style={{color:"#cbd5e1",fontSize:11}}>{bruto>0?`(${(val/bruto*100).toFixed(0)}%)`:""}</span>
-              </div>
-            ))}
-            <div style={{width:1,height:24,background:"#f8fafc"}}/>
-            <span style={{color:"#1e293b",fontWeight:800,fontFamily:"'DM Mono',monospace",fontSize:14}}>{fp(bruto)}</span>
-          </div>
-        </div>
-        <div style={{display:"flex",borderRadius:6,overflow:"hidden",height:9}}>
-          {bruto>0&&[{v:porOS.OSDE,c:"#6366f1"},{v:porOS.MEDIFE,c:"#ec4899"},{v:porOS.PARTICULAR,c:"#10b981"}]
-            .map(({v,c},i)=><div key={i} style={{width:`${(v/bruto*100)}%`,background:c,transition:"width .5s"}}/>)}
-        </div>
-      </Card>
+      {/* Por obra social */}
+      <div style={{color:"#64748b",fontSize:11,fontWeight:700,letterSpacing:1,marginBottom:8}}>POR OBRA SOCIAL</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
+        {["OSDE","MEDIFE"].map(nombre=>{
+          const d=porOSReal[nombre]||{facturado:0,cobrado:0};
+          const color=nombre==="OSDE"?"#6366f1":"#ec4899";
+          return (
+            <Card key={nombre} style={{padding:16}}>
+              <div style={{color,fontWeight:800,fontSize:13,marginBottom:8}}>{nombre}</div>
+              <div style={{color:"#64748b",fontSize:10,letterSpacing:.5}}>FACTURADO</div>
+              <div style={{color:"#1e293b",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:16,marginBottom:6}}>{fp(d.facturado)}</div>
+              <div style={{color:"#64748b",fontSize:10,letterSpacing:.5}}>PENDIENTE DE COBRO</div>
+              <div style={{color:"#f59e0b",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:16}}>{fp(d.facturado-d.cobrado)}</div>
+            </Card>
+          );
+        })}
+        <Card style={{padding:16}}>
+          <div style={{color:"#10b981",fontWeight:800,fontSize:13,marginBottom:8}}>PARTICULAR</div>
+          <div style={{color:"#64748b",fontSize:10,letterSpacing:.5}}>ESTIMADO (sin período de liquidación propio)</div>
+          <div style={{color:"#1e293b",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:16}}>{fp(porOS.PARTICULAR)}</div>
+        </Card>
+      </div>
+
+      {/* Pendiente de atención */}
+      {(pendientesDeFacturar.length>0 || vencidos.length>0) && (
+        <Card style={{marginBottom:20,borderLeft:"3px solid #f59e0b"}}>
+          <div style={{color:"#92400e",fontWeight:700,fontSize:13,marginBottom:10}}>⚠ Pendiente de atención</div>
+          {pendientesDeFacturar.map(p=>(
+            <div key={p.id} style={{fontSize:12,color:"#475569",marginBottom:6}}>• {p.etiqueta} — sin facturar todavía</div>
+          ))}
+          {vencidos.map(p=>(
+            <div key={p.id} style={{fontSize:12,color:"#b91c1c",marginBottom:6}}>• {p.etiqueta} — cobro estimado {p.fecha_cobro_estimada}, todavía no se registró el cobro</div>
+          ))}
+        </Card>
+      )}
 
       {/* VISTA POR PROFESIONAL */}
       {vista==="profesional" && (
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr",gap:16,marginBottom:20}}>
           <Card>
-            <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>👥 Visitas por profesional</div>
-            {profStats.map(({prof,total,desglose,color})=>(
-              <div key={prof} style={{marginBottom:14}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                  <span style={{color,fontSize:12,fontWeight:700}}>{prof}</span>
-                  <div style={{display:"flex",gap:8,fontSize:11}}>
-                    {desglose.osde>0      && <span style={{color:"#6366f1"}}>O:{desglose.osde}</span>}
-                    {desglose.medife>0    && <span style={{color:"#ec4899"}}>M:{desglose.medife}</span>}
-                    {desglose.particular>0&& <span style={{color:"#10b981"}}>P:{desglose.particular}</span>}
-                    {desglose.regalo>0    && <span style={{color:"#f59e0b"}}>R:{desglose.regalo}</span>}
-                    <span style={{color:"#1e293b",fontFamily:"'DM Mono',monospace",fontWeight:700}}>{total}</span>
-                  </div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div style={{color:"#1e293b",fontWeight:700,fontSize:13}}>👥 Profesionales — {MES_LABELS[mes]||mes}</div>
+              <div style={{color:"#ef4444",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:15}}>Total a pagar: {fp(totalHon)}</div>
+            </div>
+            {profStats.map(({prof,total,hon,color})=>(
+              <div key={prof} onClick={()=>onVerFicha&&onVerFicha(prof)}
+                style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 4px",
+                  borderBottom:"1px solid #f1f5f9",cursor:onVerFicha?"pointer":"default"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{width:9,height:9,borderRadius:"50%",background:color}}/>
+                  <span style={{color:"#1e293b",fontSize:13,fontWeight:700}}>{prof}</span>
+                  <span style={{color:"#94a3b8",fontSize:12}}>{total} sesiones</span>
                 </div>
-                <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:7,background:"#f8fafc"}}>
-                  {total>0&&[{v:desglose.osde,c:"#6366f1"},{v:desglose.medife,c:"#ec4899"},{v:desglose.particular,c:"#10b981"},{v:desglose.regalo,c:"#f59e0b"}]
-                    .map(({v,c},i)=>v>0&&<div key={i} style={{width:`${(v/total*100)}%`,background:c}}/>)}
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <span style={{color:"#10b981",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:13}}>{fp(hon)}</span>
+                  {onVerFicha && <span style={{color:"#cbd5e1",fontSize:14}}>›</span>}
                 </div>
               </div>
             ))}
-          </Card>
-
-          <Card>
-            <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>💰 Honorario a pagar</div>
-            {profStats.filter(p=>p.hon>0).map(({prof,hon,color})=>{
-              const max=Math.max(...profStats.map(p=>p.hon))||1;
-              return (
-                <div key={prof} style={{marginBottom:14}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                    <span style={{color,fontSize:12,fontWeight:700}}>{prof}</span>
-                    <span style={{color:"#10b981",fontFamily:"'DM Mono',monospace",fontWeight:700}}>{fp(hon)}</span>
-                  </div>
-                  <div style={{background:"#f8fafc",borderRadius:4,height:7}}>
-                    <div style={{width:`${(hon/max)*100}%`,background:color,borderRadius:4,height:7}}/>
-                  </div>
-                </div>
-              );
-            })}
-            <div style={{marginTop:14,borderTop:"1px solid #dbeafe",paddingTop:12,display:"flex",justifyContent:"space-between"}}>
-              <span style={{color:"#64748b",fontSize:12,fontWeight:700}}>TOTAL A PAGAR</span>
-              <span style={{color:"#ef4444",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:18}}>{fp(totalHon)}</span>
-            </div>
-          </Card>
-
-          <Card style={{gridColumn:"1/-1"}}>
-            <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>📋 Detalle por profesional — {MES_LABELS[mes]||mes}</div>
-            <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                <thead>
-                  <tr>{["PROFESIONAL","OSDE","MEDIFE","PREPAGA","PARTICULAR","REGALOS","TOTAL","HONORARIO"].map(h=>(
-                    <th key={h} style={{...S.th,textAlign:h==="PROFESIONAL"?"left":"right"}}>{h}</th>
-                  ))}</tr>
-                </thead>
-                <tbody>
-                  {profStats.map(({prof,total,hon,desglose,color})=>{
-                    const v=VALORES_PROF[prof];
-                    return (
-                      <tr key={prof}>
-                        <td style={{...S.td,color,fontWeight:700}}>{prof}</td>
-                        <td style={{...S.td,textAlign:"right",color:"#6366f1"}}>{desglose.osde}</td>
-                        <td style={{...S.td,textAlign:"right",color:"#ec4899"}}>{desglose.medife}</td>
-                        <td style={{...S.td,textAlign:"right",color:"#94a3b8"}}>{desglose.osde+desglose.medife}</td>
-                        <td style={{...S.td,textAlign:"right",color:"#10b981"}}>{desglose.particular}</td>
-                        <td style={{...S.td,textAlign:"right",color:"#f59e0b"}}>{desglose.regalo}</td>
-                        <td style={{...S.td,textAlign:"right",fontWeight:700,color:"#1e293b"}}>{total}</td>
-                        <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:800,
-                          color:v?.esDuena?"#64748b":"#10b981",fontSize:14}}>
-                          {v?.esDuena?"—":fp(hon)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
           </Card>
 
           {mesAnt&&(
@@ -3226,6 +3328,10 @@ export default function RavaCRM({ user, onLogout }) {
   const [registros,setRegistros]=useState(REGISTROS_INIT);
   const [cargando,setCargando]=useState(true);
   const [precios,setPrecios]=useState(null);
+  const [periodos,setPeriodos]=useState([]);
+  const [obrasSociales,setObrasSociales]=useState([]);
+  const [pagosProfesionales,setPagosProfesionales]=useState([]);
+  const [fichaProf,setFichaProf]=useState(null);
 
   const cargarPrecios = useCallback(async () => {
     const mesActual = getMesActual();
@@ -3238,6 +3344,19 @@ export default function RavaCRM({ user, onLogout }) {
   }, []);
 
   useEffect(() => { cargarPrecios(); }, [cargarPrecios]);
+
+  const cargarCobros = useCallback(async () => {
+    const [{ data: p }, { data: os }, { data: pagos }] = await Promise.all([
+      supabase.from("crm_periodos_estado").select("*"),
+      supabase.from("crm_obras_sociales").select("*"),
+      supabase.from("crm_pagos_profesionales").select("*"),
+    ]);
+    if (p) setPeriodos(p);
+    if (os) setObrasSociales(os);
+    if (pagos) setPagosProfesionales(pagos);
+  }, []);
+
+  useEffect(() => { cargarCobros(); }, [cargarCobros]);
 
   const cargarDesdeSupabase = useCallback(async () => {
     setCargando(true);
@@ -3278,10 +3397,6 @@ export default function RavaCRM({ user, onLogout }) {
         </div>
         <div style={{flex:1}}/>
         {user && <div style={{color:"#64748b",fontSize:11,fontFamily:"'DM Mono',monospace"}}>👤 {user.nombre}</div>}
-        <div style={{color:"#cbd5e1",fontSize:11,fontFamily:"'DM Mono',monospace"}}>
-          {new Date().toLocaleDateString("es-AR",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}
-        </div>
-        <div style={{width:8,height:8,borderRadius:"50%",background:"#10b981",boxShadow:"0 0 8px #10b981"}}/>
         {onLogout && <button onClick={onLogout} style={{background:"#f8fafc",border:"1px solid #dbeafe",color:"#64748b",padding:"4px 10px",borderRadius:6,cursor:"pointer",fontSize:11,fontFamily:"inherit"}}>Salir</button>}
       </div>
 
@@ -3313,12 +3428,17 @@ export default function RavaCRM({ user, onLogout }) {
               <span style={{animation:"spin 1s linear infinite",display:"inline-block"}}>⟳</span> Cargando datos desde Supabase...
             </div>
           )}
+          {fichaProf ? (
+            <ViewFichaProfesional prof={fichaProf} registros={registros} precios={precios}
+              pagosProfesionales={pagosProfesionales} onVolver={()=>setFichaProf(null)}/>
+          ) : (
+          <>
           <div style={{marginBottom:20}}>
             <h1 style={{color:"#1e293b",fontSize:19,fontWeight:800,margin:0}}>
               {VIEWS.find(v=>v.id===view)?.icon} {VIEWS.find(v=>v.id===view)?.label}
             </h1>
           </div>
-          {view==="dashboard"    && <ViewDashboard registros={registros} precios={precios}/>}
+          {view==="dashboard"    && <ViewDashboard registros={registros} precios={precios} periodos={periodos} obrasSociales={obrasSociales} onVerFicha={setFichaProf}/>}
           {view==="liquidacion"  && <ViewLiquidacion registros={registros} setRegistros={setRegistros} onRefresh={cargarDesdeSupabase} precios={precios}/>}
           {view==="ingresos"     && <ViewIngresos registros={registros}/>}
           {view==="cobros"       && <ViewCobros registros={registros}/>}
@@ -3326,6 +3446,8 @@ export default function RavaCRM({ user, onLogout }) {
           {view==="conciliacion" && <ViewConciliacion registros={registros}/>}
           {view==="precios"       && <ViewPrecios onPreciosUpdate={cargarPrecios}/>}
           {view==="rentabilidad" && <ViewRentabilidad registros={registros} precios={precios}/>}
+          </>
+          )}
         </div>
       </div>
     </div>
