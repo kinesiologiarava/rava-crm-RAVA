@@ -3,8 +3,17 @@ import { extraerFilasPDFTodasLasPaginas } from "./pdfExtract.js";
 // Mapeo de códigos de nomenclador OSDE → tipo de prestación del CRM.
 // Se completa de a poco a medida que aparecen códigos nuevos en los PDF reales.
 const MAPEO_CODIGOS_OSDE = {
-  "1250181": "FKT",
+  "1250181": "FKT",     // MOD.TRAT.KINESIOLOGICO
+  "1250164": "RPG",     // TECNIC.CORRECCION POSTURAL
+  "1250186": "DRENAJE", // DRENAJE LINFATICO
 };
+
+// Código que aparece rara vez y NO corresponde a una prestación real —
+// según confirmación del usuario, la clínica no atiende Fonoaudiología;
+// probablemente es cómo OSDE marca la baja de una orden. Se excluye del
+// conteo pero se reporta aparte para que quede a la vista, no se ignora
+// en silencio.
+const CODIGO_IGNORAR_CON_AVISO = { "1250290": "FIN DE TRATAMIENTO PARA FONO" };
 
 function parseFilaDato(fila) {
   const items = fila.items;
@@ -43,8 +52,9 @@ export async function parseDetalleOSDE(file, onProgreso) {
 
   const porTipo = {};
   const codigosSinMapear = {};
+  const avisos = {}; // códigos conocidos pero excluidos a propósito (ej. FONO)
   let fechaMin = null, fechaMax = null;
-  let debitadas = 0;
+  let rechazadas = 0; // ESTADO = RECHAZADO -> ajuste, debería alertar
   let totalFilas = 0;
 
   for (const pagina of paginas) {
@@ -52,6 +62,11 @@ export async function parseDetalleOSDE(file, onProgreso) {
       const d = parseFilaDato(fila);
       if (!d) continue;
       totalFilas++;
+
+      if (CODIGO_IGNORAR_CON_AVISO[d.codigo]) {
+        avisos[d.codigo] = (avisos[d.codigo] || 0) + 1;
+        continue;
+      }
 
       const tipo = MAPEO_CODIGOS_OSDE[d.codigo];
       if (!tipo) {
@@ -61,7 +76,7 @@ export async function parseDetalleOSDE(file, onProgreso) {
       if (!porTipo[tipo]) porTipo[tipo] = { visitas: 0, liquidado: 0 };
       porTipo[tipo].visitas += 1;
       porTipo[tipo].liquidado += d.liquidado;
-      if (d.estado !== "APROBADO") debitadas++;
+      if (d.estado === "RECHAZADO") rechazadas++;
 
       const [dd, mm, yy] = d.fechaConsumo.split("/");
       const iso = `20${yy}-${mm}-${dd}`;
@@ -70,5 +85,5 @@ export async function parseDetalleOSDE(file, onProgreso) {
     }
   }
 
-  return { totalFilas, porTipo, codigosSinMapear, debitadas, fechaDesde: fechaMin, fechaHasta: fechaMax };
+  return { totalFilas, porTipo, codigosSinMapear, avisos, rechazadas, fechaDesde: fechaMin, fechaHasta: fechaMax };
 }

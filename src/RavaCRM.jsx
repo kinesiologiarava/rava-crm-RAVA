@@ -91,13 +91,14 @@ const GASTOS_INIT = [
 function calcResumen(registros, mes) {
   const filtered = mes ? registros.filter(r=>r.mes===mes) : registros;
   const res = {};
-  IDS_TODOS.forEach(p=>{ res[p]={osde:0,medife:0,particular:0,regalo:0,prest:{}}; });
+  IDS_TODOS.forEach(p=>{ res[p]={osde:0,medife:0,particular:0,regalo:0,pasadaOsde:0,prest:{}}; });
   filtered.forEach(r=>{
-    if(!res[r.prof]) res[r.prof]={osde:0,medife:0,particular:0,regalo:0,prest:{}};
+    if(!res[r.prof]) res[r.prof]={osde:0,medife:0,particular:0,regalo:0,pasadaOsde:0,prest:{}};
     res[r.prof].osde      += r.osde||0;
     res[r.prof].medife    += r.medife||0;
     res[r.prof].particular+= r.particular||0;
     res[r.prof].regalo    += r.regalo||0;
+    res[r.prof].pasadaOsde+= r.pasada_osde||0;
     if(!res[r.prof].prest[r.prestacion]) res[r.prof].prest[r.prestacion]={osde:0,medife:0,particular:0};
     res[r.prof].prest[r.prestacion].osde      += r.osde||0;
     res[r.prof].prest[r.prestacion].medife    += r.medife||0;
@@ -122,7 +123,7 @@ function calcIngresoBruto(registros, mes, precios=null) {
   const aranceles = getAranceles(precios);
   return registros.filter(r=>!mes||r.mes===mes).reduce((sum,r)=>{
     const ar=aranceles[prestacionEfectiva(r.prof,r.prestacion,aranceles)];
-    return sum+(r.osde||0)*(ar.OSDE||0)+(r.medife||0)*(ar.MEDIFE||0)+(r.particular||0)*(ar.PARTICULAR||0);
+    return sum+((r.osde||0)+(r.pasada_osde||0))*(ar.OSDE||0)+(r.medife||0)*(ar.MEDIFE||0)+(r.particular||0)*(ar.PARTICULAR||0);
   },0);
 }
 
@@ -130,7 +131,7 @@ function calcIngresoPorOS(registros, mes, precios=null) {
   const aranceles = getAranceles(precios);
   return registros.filter(r=>!mes||r.mes===mes).reduce((acc,r)=>{
     const ar=aranceles[prestacionEfectiva(r.prof,r.prestacion,aranceles)];
-    acc.OSDE      += (r.osde||0)*(ar.OSDE||0);
+    acc.OSDE      += ((r.osde||0)+(r.pasada_osde||0))*(ar.OSDE||0);
     acc.MEDIFE    += (r.medife||0)*(ar.MEDIFE||0);
     acc.PARTICULAR+= (r.particular||0)*(ar.PARTICULAR||0);
     return acc;
@@ -144,10 +145,10 @@ function calcIngresoPorPrestacion(registros, mes, precios=null) {
     const prestEf=prestacionEfectiva(r.prof,r.prestacion,aranceles);
     const ar=aranceles[prestEf];
     if(!acc[prestEf]) acc[prestEf]={OSDE:0,MEDIFE:0,PARTICULAR:0,total:0};
-    acc[prestEf].OSDE      += (r.osde||0)*(ar.OSDE||0);
+    acc[prestEf].OSDE      += ((r.osde||0)+(r.pasada_osde||0))*(ar.OSDE||0);
     acc[prestEf].MEDIFE    += (r.medife||0)*(ar.MEDIFE||0);
     acc[prestEf].PARTICULAR+= (r.particular||0)*(ar.PARTICULAR||0);
-    acc[prestEf].total     += (r.osde||0)*(ar.OSDE||0)+(r.medife||0)*(ar.MEDIFE||0)+(r.particular||0)*(ar.PARTICULAR||0);
+    acc[prestEf].total     += ((r.osde||0)+(r.pasada_osde||0))*(ar.OSDE||0)+(r.medife||0)*(ar.MEDIFE||0)+(r.particular||0)*(ar.PARTICULAR||0);
   });
   return acc;
 }
@@ -604,9 +605,10 @@ function ViewCobrosOSDE({registros}) {
                   .filter((v,i,a)=>v&&a.indexOf(v)===i);
     let fkt=0, rpg=0, drenaje=0;
     registros.filter(r=>meses.includes(r.mes)).forEach(r=>{
-      if(r.prestacion==="FKT")     fkt     += r.osde||0;
-      if(r.prestacion==="RPG")     rpg     += r.osde||0;
-      if(r.prestacion==="DRENAJE") drenaje += r.osde||0;
+      const efectivo = (r.osde||0)+(r.pasada_osde||0);
+      if(r.prestacion==="FKT")     fkt     += efectivo;
+      if(r.prestacion==="RPG")     rpg     += efectivo;
+      if(r.prestacion==="DRENAJE") drenaje += efectivo;
     });
     return {
       FKT:    {visitas:fkt,    estimado:fkt    *ARANCELES_REALES.FKT.OSDE},
@@ -1323,8 +1325,8 @@ function ViewFichaProfesional({prof, registros, precios, pagosProfesionales=[], 
   const color = COLOR_POR_PROFESIONAL[prof] || "#4338ca";
 
   const res = useMemo(()=>calcResumen(registros,mes),[registros,mes]);
-  const d = res[prof] || {osde:0,medife:0,particular:0,regalo:0};
-  const sesiones = d.osde+d.medife+d.particular+(d.regalo||0);
+  const d = res[prof] || {osde:0,medife:0,particular:0,regalo:0,pasadaOsde:0};
+  const sesiones = d.osde+d.medife+d.particular+(d.regalo||0)+(d.pasadaOsde||0);
   const honGenerado = useMemo(()=>calcHonorario(prof,d,precios),[prof,d,precios]);
   const pago = pagosProfesionales.find(p=>p.mes===mes && p.profesional===prof);
   const honPagado = pago ? pago.importe_pagado : null;
@@ -1473,8 +1475,8 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
     const da = resAnt[prof]||{osde:0,medife:0,particular:0,regalo:0};
     const hon=calcHonorario(prof,d,precios), honA=calcHonorario(prof,da,precios);
     totalHon+=hon; totalHonAnt+=honA;
-    const total=d.osde+d.medife+d.particular+(d.regalo||0);
-    const desglose={osde:d.osde,medife:d.medife,particular:d.particular,regalo:d.regalo||0};
+    const total=d.osde+d.medife+d.particular+(d.regalo||0)+(d.pasadaOsde||0);
+    const desglose={osde:d.osde,medife:d.medife,particular:d.particular,regalo:d.regalo||0,pasadaOsde:d.pasadaOsde||0};
     return {prof,total,hon,color:COLOR_POR_PROFESIONAL[prof]||"#fff",desglose};
   }).filter(p=>p.total>0||p.hon>0);
 
