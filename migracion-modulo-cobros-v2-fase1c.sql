@@ -77,22 +77,22 @@ WHERE o.nombre = 'OSDE' AND p.fecha_desde = '2026-04-20';
 -- (número real y fecha de emisión: completar cuando se confirmen)
 -- ───────────────────────────────────────────────────────────
 INSERT INTO crm_facturas (periodo_id, numero, fecha_emision, importe_exento, importe_gravado, iva, importe_total, notas)
-SELECT p.id, NULL, NULL, 6548677.44, 3635793.18, 381758.31, 10566228.93,
+SELECT p.id, NULL::text, NULL::date, 6548677.44, 3635793.18, 381758.31, 10566228.93,
   'Importes tomados de la Cabecera (trámite 5805488221) — falta número de factura real y fecha de emisión'
 FROM crm_periodos_liquidacion p JOIN crm_obras_sociales o ON o.id = p.obra_social_id
 WHERE o.nombre = 'OSDE' AND p.fecha_desde = '2025-12-16'
 UNION ALL
-SELECT p.id, NULL, NULL, 7269641.14, 5282591.06, 554672.04, 13106904.24,
+SELECT p.id, NULL::text, NULL::date, 7269641.14, 5282591.06, 554672.04, 13106904.24,
   'Importes tomados de la Cabecera (trámite 5805677172) — falta número de factura real y fecha de emisión'
 FROM crm_periodos_liquidacion p JOIN crm_obras_sociales o ON o.id = p.obra_social_id
 WHERE o.nombre = 'OSDE' AND p.fecha_desde = '2026-02-13'
 UNION ALL
-SELECT p.id, NULL, NULL, 8064977.17, 6715828.78, 705162.03, 15485967.98,
+SELECT p.id, NULL::text, NULL::date, 8064977.17, 6715828.78, 705162.03, 15485967.98,
   'Importes tomados de la Cabecera (trámite 5805780144) — falta número de factura real y fecha de emisión'
 FROM crm_periodos_liquidacion p JOIN crm_obras_sociales o ON o.id = p.obra_social_id
 WHERE o.nombre = 'OSDE' AND p.fecha_desde = '2026-03-15'
 UNION ALL
-SELECT p.id, NULL, NULL, 9465875.73, 6860903.67, 720394.89, 17047174.29,
+SELECT p.id, NULL::text, NULL::date, 9465875.73, 6860903.67, 720394.89, 17047174.29,
   'Importes tomados de la Cabecera (trámite 5805882536) — falta número de factura real y fecha de emisión'
 FROM crm_periodos_liquidacion p JOIN crm_obras_sociales o ON o.id = p.obra_social_id
 WHERE o.nombre = 'OSDE' AND p.fecha_desde = '2026-04-20';
