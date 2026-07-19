@@ -161,7 +161,7 @@ const S = {
   td:    {padding:"9px 12px",borderBottom:"1px solid #e0e7ff",verticalAlign:"middle"},
   btn:   (c="#4338ca",sz=13)=>({background:c,color:["#e2e8f0","#f1f5f9","#64748b"].includes(c)?"#475569":"#fff",border:"none",borderRadius:8,padding:`${sz>11?9:6}px ${sz>11?20:14}px`,fontWeight:700,cursor:"pointer",fontSize:sz,fontFamily:"inherit"}),
 };
-const Card = ({children,style={}}) => <div style={{background:"#ffffff",border:"1px solid #dbeafe",borderRadius:14,padding:20,boxShadow:"0 2px 8px rgba(99,102,241,0.08)",...style}}>{children}</div>;
+const Card = ({children,style={},...rest}) => <div style={{background:"#ffffff",border:"1px solid #dbeafe",borderRadius:14,padding:20,boxShadow:"0 2px 8px rgba(99,102,241,0.08)",...style}} {...rest}>{children}</div>;
 const Badge = ({children,color="#4338ca"}) => <span style={{background:color+"22",color,border:`1px solid ${color}44`,borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700}}>{children}</span>;
 const StatCard = ({label,value,color="#4338ca",sub}) => (
   <div style={{background:"#eef2f7",border:`1px solid ${color}33`,borderRadius:12,padding:"15px 18px",flex:1,minWidth:140}}>
@@ -883,6 +883,11 @@ function ViewRentabilidad({registros,precios}) {
   const gastosMes  = gastos.filter(g=>g.mes===mes);
   const totalGastos= gastosMes.reduce((s,g)=>s+(g.monto||0),0);
   const bruto      = calcIngresoBruto(registros,mes,precios);
+  const porOS      = calcIngresoPorOS(registros,mes,precios);
+  const porPrest   = calcIngresoPorPrestacion(registros,mes,precios);
+  const barPrestData = Object.entries(porPrest).map(([prest,d])=>({
+    name:prest, OSDE:Math.round(d.OSDE), MEDIFE:Math.round(d.MEDIFE), PARTICULAR:Math.round(d.PARTICULAR),
+  }));
   const resumen    = calcResumen(registros,mes);
   const totalHon   = IDS_TODOS.reduce((s,p)=>{
     const d=resumen[p]||{osde:0,medife:0,particular:0,regalo:0};
@@ -990,6 +995,97 @@ function ViewRentabilidad({registros,precios}) {
             </ResponsiveContainer>
           </Card>
         )}
+      </div>
+
+      {/* Por especialidad — qué tratamiento es más rentable */}
+      <div style={{color:"#64748b",fontSize:11,fontWeight:700,letterSpacing:1,marginBottom:10,marginTop:4}}>🏥 POR ESPECIALIDAD — {(MES_LABELS[mes]||mes).toUpperCase()}</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
+        <Card>
+          <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>Ingreso por especialidad</div>
+          {Object.entries(porPrest).map(([prest,d],i)=>{
+            const total=d.total||0;
+            const col=PIE_COLORS[i%PIE_COLORS.length];
+            return (
+              <div key={prest} style={{marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{color:col,fontSize:12,fontWeight:700}}>{prest}</span>
+                  <div style={{display:"flex",gap:8,fontSize:11}}>
+                    {d.OSDE>0      && <span style={{color:"#4338ca"}}>O:{fp(d.OSDE)}</span>}
+                    {d.MEDIFE>0    && <span style={{color:"#7c3aed"}}>M:{fp(d.MEDIFE)}</span>}
+                    {d.PARTICULAR>0&& <span style={{color:"#059669"}}>P:{fp(d.PARTICULAR)}</span>}
+                    <span style={{color:"#1e293b",fontFamily:"'DM Mono',monospace",fontWeight:700}}>{fp(total)}</span>
+                  </div>
+                </div>
+                <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:7,background:"#f8fafc"}}>
+                  {total>0&&[{v:d.OSDE,c:"#4338ca"},{v:d.MEDIFE,c:"#7c3aed"},{v:d.PARTICULAR,c:"#059669"}]
+                    .map(({v,c},j)=>v>0&&<div key={j} style={{width:`${(v/total*100)}%`,background:c}}/>)}
+                </div>
+              </div>
+            );
+          })}
+        </Card>
+
+        <Card>
+          <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>Distribución por especialidad</div>
+          <ResponsiveContainer width="100%" height={230}>
+            <PieChart>
+              <Pie data={Object.entries(porPrest).map(([name,d])=>({name,value:Math.round(d.total||0)}))}
+                cx="50%" cy="50%" outerRadius={80} dataKey="value"
+                label={({name,percent})=>percent>0.05?`${name} ${(percent*100).toFixed(0)}%`:""} labelLine={false}>
+                {Object.keys(porPrest).map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
+              </Pie>
+              <Tooltip formatter={v=>fp(v)} contentStyle={{background:"#1e3a6e",border:"none",borderRadius:10,color:"white"}}/>
+            </PieChart>
+          </ResponsiveContainer>
+        </Card>
+
+        <Card style={{gridColumn:"1/-1"}}>
+          <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>Detalle por especialidad — {MES_LABELS[mes]||mes}</div>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+              <thead>
+                <tr>{["ESPECIALIDAD","OSDE $","MEDIFE $","PARTICULAR $","TOTAL","% bruto"].map(h=>(
+                  <th key={h} style={{...S.th,textAlign:h==="ESPECIALIDAD"?"left":"right"}}>{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody>
+                {Object.entries(porPrest).map(([prest,d],i)=>(
+                  <tr key={prest}>
+                    <td style={S.td}><Badge color={PIE_COLORS[i%PIE_COLORS.length]}>{prest}</Badge></td>
+                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#4338ca"}}>{fp(d.OSDE)}</td>
+                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#7c3aed"}}>{fp(d.MEDIFE)}</td>
+                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#059669"}}>{fp(d.PARTICULAR)}</td>
+                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#1e293b"}}>{fp(d.total)}</td>
+                    <td style={{...S.td,textAlign:"right",color:"#64748b"}}>{bruto>0?`${(d.total/bruto*100).toFixed(1)}%`:"—"}</td>
+                  </tr>
+                ))}
+                <tr style={{background:"#eef2f7"}}>
+                  <td style={{...S.td,fontWeight:700,color:"#94a3b8"}}>TOTAL</td>
+                  <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#4338ca"}}>{fp(porOS.OSDE)}</td>
+                  <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#7c3aed"}}>{fp(porOS.MEDIFE)}</td>
+                  <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#059669"}}>{fp(porOS.PARTICULAR)}</td>
+                  <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:15,color:"#1e293b"}}>{fp(bruto)}</td>
+                  <td style={{...S.td,textAlign:"right",color:"#64748b"}}>100%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <Card style={{gridColumn:"1/-1"}}>
+          <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>Desglose por especialidad y obra social</div>
+          <ResponsiveContainer width="100%" height={190}>
+            <BarChart data={barPrestData} margin={{top:5,right:20,bottom:5,left:10}}>
+              <XAxis dataKey="name" tick={{fill:"#64748b",fontSize:11}}/>
+              <YAxis tick={{fill:"#64748b",fontSize:9}} tickFormatter={v=>v>=1000000?`${(v/1000000).toFixed(1)}M`:v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
+              <Tooltip content={<TooltipCustom/>}/>
+              <Legend wrapperStyle={{fontSize:10,color:"#94a3b8"}}/>
+              <Bar dataKey="OSDE"       fill="#4338ca" radius={[3,3,0,0]}/>
+              <Bar dataKey="MEDIFE"     fill="#7c3aed" radius={[3,3,0,0]}/>
+              <Bar dataKey="PARTICULAR" fill="#059669" radius={[3,3,0,0]}/>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
       </div>
 
       {/* Lista gastos */}
@@ -1364,7 +1460,6 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
   const mesesDisp = [...new Set(registros.map(r=>r.mes))].sort().reverse();
   if(!mesesDisp.includes(getMesActual())) mesesDisp.unshift(getMesActual());
   const [mes, setMes] = useState(getMesActual());
-  const [vista, setVista] = useState("profesional");
 
   const nombreOS = (id) => obrasSociales.find(o=>o.id===id)?.nombre || "?";
   const periodosDelMes = useMemo(()=>periodos.filter(p=>mesDeFecha(p.fecha_hasta)===mes),[periodos,mes]);
@@ -1424,19 +1519,13 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
 
   return (
     <div>
-      {/* Selector mes + toggle vista */}
+      {/* Selector mes */}
       <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
           {mesesDisp.slice(0,5).map(m=>(
             <button key={m} onClick={()=>setMes(m)} style={{...S.btn(mes===m?"#4338ca":"#e2e8f0",12),padding:"7px 16px"}}>
               {MES_LABELS[m]||m}
             </button>
-          ))}
-        </div>
-        <div style={{flex:1}}/>
-        <div style={{display:"flex",gap:6}}>
-          {[["profesional","👥 Por profesional"],["especialidad","🏥 Por especialidad"]].map(([id,lbl])=>(
-            <button key={id} onClick={()=>setVista(id)} style={{...S.btn(vista===id?"#059669":"#e2e8f0",11),padding:"6px 14px"}}>{lbl}</button>
           ))}
         </div>
       </div>
@@ -1498,8 +1587,6 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
         </Card>
       )}
 
-      {/* VISTA POR PROFESIONAL */}
-      {vista==="profesional" && (
         <div style={{display:"grid",gridTemplateColumns:"1fr",gap:16,marginBottom:20}}>
           <Card>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
@@ -1539,107 +1626,340 @@ function ViewDashboard({registros, precios, periodos=[], obrasSociales=[], onVer
             </Card>
           )}
         </div>
-      )}
-
-      {/* VISTA POR ESPECIALIDAD */}
-      {vista==="especialidad" && (
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
-          <Card>
-            <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>🏥 Ingreso por especialidad</div>
-            {Object.entries(porPrest).map(([prest,d],i)=>{
-              const total=d.total||0;
-              const max=Math.max(...Object.values(porPrest).map(x=>x.total||0))||1;
-              const col=PIE_COLORS[i%PIE_COLORS.length];
-              return (
-                <div key={prest} style={{marginBottom:14}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                    <span style={{color:col,fontSize:12,fontWeight:700}}>{prest}</span>
-                    <div style={{display:"flex",gap:8,fontSize:11}}>
-                      {d.OSDE>0      && <span style={{color:"#4338ca"}}>O:{fp(d.OSDE)}</span>}
-                      {d.MEDIFE>0    && <span style={{color:"#7c3aed"}}>M:{fp(d.MEDIFE)}</span>}
-                      {d.PARTICULAR>0&& <span style={{color:"#059669"}}>P:{fp(d.PARTICULAR)}</span>}
-                      <span style={{color:"#1e293b",fontFamily:"'DM Mono',monospace",fontWeight:700}}>{fp(total)}</span>
-                    </div>
-                  </div>
-                  <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:7,background:"#f8fafc"}}>
-                    {total>0&&[{v:d.OSDE,c:"#4338ca"},{v:d.MEDIFE,c:"#7c3aed"},{v:d.PARTICULAR,c:"#059669"}]
-                      .map(({v,c},j)=>v>0&&<div key={j} style={{width:`${(v/total*100)}%`,background:c}}/>)}
-                  </div>
-                </div>
-              );
-            })}
-          </Card>
-
-          <Card>
-            <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>🥧 Distribución por especialidad</div>
-            <ResponsiveContainer width="100%" height={230}>
-              <PieChart>
-                <Pie data={Object.entries(porPrest).map(([name,d])=>({name,value:Math.round(d.total||0)}))}
-                  cx="50%" cy="50%" outerRadius={80} dataKey="value"
-                  label={({name,percent})=>percent>0.05?`${name} ${(percent*100).toFixed(0)}%`:""} labelLine={false}>
-                  {Object.keys(porPrest).map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
-                </Pie>
-                <Tooltip formatter={v=>fp(v)} contentStyle={{background:"#1e3a6e",border:"none",borderRadius:10,color:"white"}}/>
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
-
-          <Card style={{gridColumn:"1/-1"}}>
-            <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>📋 Detalle por especialidad — {MES_LABELS[mes]||mes}</div>
-            <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                <thead>
-                  <tr>{["ESPECIALIDAD","OSDE $","MEDIFE $","PARTICULAR $","TOTAL","% bruto"].map(h=>(
-                    <th key={h} style={{...S.th,textAlign:h==="ESPECIALIDAD"?"left":"right"}}>{h}</th>
-                  ))}</tr>
-                </thead>
-                <tbody>
-                  {Object.entries(porPrest).map(([prest,d],i)=>(
-                    <tr key={prest}>
-                      <td style={S.td}><Badge color={PIE_COLORS[i%PIE_COLORS.length]}>{prest}</Badge></td>
-                      <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#4338ca"}}>{fp(d.OSDE)}</td>
-                      <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#7c3aed"}}>{fp(d.MEDIFE)}</td>
-                      <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",color:"#059669"}}>{fp(d.PARTICULAR)}</td>
-                      <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#1e293b"}}>{fp(d.total)}</td>
-                      <td style={{...S.td,textAlign:"right",color:"#64748b"}}>{bruto>0?`${(d.total/bruto*100).toFixed(1)}%`:"—"}</td>
-                    </tr>
-                  ))}
-                  <tr style={{background:"#eef2f7"}}>
-                    <td style={{...S.td,fontWeight:700,color:"#94a3b8"}}>TOTAL</td>
-                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#4338ca"}}>{fp(porOS.OSDE)}</td>
-                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#7c3aed"}}>{fp(porOS.MEDIFE)}</td>
-                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:700,color:"#059669"}}>{fp(porOS.PARTICULAR)}</td>
-                    <td style={{...S.td,textAlign:"right",fontFamily:"'DM Mono',monospace",fontWeight:800,fontSize:15,color:"#1e293b"}}>{fp(bruto)}</td>
-                    <td style={{...S.td,textAlign:"right",color:"#64748b"}}>100%</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </Card>
-
-          <Card style={{gridColumn:"1/-1"}}>
-            <div style={{color:"#1e293b",fontWeight:700,marginBottom:14,fontSize:13}}>📊 Desglose por especialidad y obra social</div>
-            <ResponsiveContainer width="100%" height={190}>
-              <BarChart data={barPrestData} margin={{top:5,right:20,bottom:5,left:10}}>
-                <XAxis dataKey="name" tick={{fill:"#64748b",fontSize:11}}/>
-                <YAxis tick={{fill:"#64748b",fontSize:9}} tickFormatter={v=>v>=1000000?`${(v/1000000).toFixed(1)}M`:v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
-                <Tooltip content={<TooltipCustom/>}/>
-                <Legend wrapperStyle={{fontSize:10,color:"#94a3b8"}}/>
-                <Bar dataKey="OSDE"       fill="#4338ca" radius={[3,3,0,0]}/>
-                <Bar dataKey="MEDIFE"     fill="#7c3aed" radius={[3,3,0,0]}/>
-                <Bar dataKey="PARTICULAR" fill="#059669" radius={[3,3,0,0]}/>
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }
 
 
 
-// ─── VISTA: COBROS (OSDE + MEDIFE + PARTICULARES) ────────────────────────────
+// ─── VISTA: COBROS v2 — período de liquidación como eje central ──────────────
+const ESTADO_INFO = {
+  esperando_liquidacion: {label:"Esperando liquidación", color:"#94a3b8"},
+  facturado_pendiente:   {label:"Facturado, pendiente de cobro", color:"#d97706"},
+  cobrado_parcial:       {label:"Cobrado parcial", color:"#4338ca"},
+  cobrado_total:         {label:"Cobrado total", color:"#059669"},
+};
+
+function ViewCobrosV2({periodos, obrasSociales, onRefresh}) {
+  const [filtroOS, setFiltroOS] = useState("todos");
+  const [periodoAbierto, setPeriodoAbierto] = useState(null); // id
+  const [detalle, setDetalle] = useState(null); // {facturas, documentos, cobros}
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const [showNuevoPeriodo, setShowNuevoPeriodo] = useState(false);
+  const [showFactura, setShowFactura] = useState(false);
+  const [showCobro, setShowCobro] = useState(false);
+  const [importandoPdf, setImportandoPdf] = useState(false);
+  const pdfRef = useRef(null);
+
+  const nombreOS = (id) => obrasSociales.find(o=>o.id===id)?.nombre || "?";
+  const obraSocialActiva = obrasSociales.find(o=>o.nombre===filtroOS);
+
+  const periodosFiltrados = filtroOS==="todos" ? periodos : periodos.filter(p=>nombreOS(p.obra_social_id)===filtroOS);
+  const ordenados = [...periodosFiltrados].sort((a,b)=>b.fecha_desde.localeCompare(a.fecha_desde));
+
+  const periodo = periodos.find(p=>p.id===periodoAbierto);
+
+  async function abrirPeriodo(id) {
+    setPeriodoAbierto(id);
+    setCargandoDetalle(true);
+    const [{data:facturas},{data:documentos},{data:cobros}] = await Promise.all([
+      supabase.from("crm_facturas").select("*").eq("periodo_id", id),
+      supabase.from("crm_documentos_liquidacion").select("*").eq("periodo_id", id),
+      supabase.from("crm_cobros").select("*").eq("periodo_id", id).order("fecha"),
+    ]);
+    setDetalle({facturas: facturas||[], documentos: documentos||[], cobros: cobros||[]});
+    setCargandoDetalle(false);
+  }
+
+  async function refrescarDetalle() {
+    if (periodoAbierto) await abrirPeriodo(periodoAbierto);
+    if (onRefresh) await onRefresh();
+  }
+
+  async function crearPeriodo({obra_social_id, fecha_desde, fecha_hasta, etiqueta}) {
+    const os = obrasSociales.find(o=>o.id===obra_social_id);
+    const demora = os?.dias_demora_cobro_est || 30;
+    const fechaCobroEst = new Date(fecha_hasta);
+    fechaCobroEst.setDate(fechaCobroEst.getDate() + demora);
+    const { error } = await supabase.from("crm_periodos_liquidacion").insert({
+      obra_social_id, fecha_desde, fecha_hasta,
+      etiqueta: etiqueta || `${nombreOS(obra_social_id)} ${fecha_desde} a ${fecha_hasta}`,
+      fecha_cobro_estimada: fechaCobroEst.toISOString().slice(0,10),
+    });
+    if (error) { alert("Error al crear período: " + error.message); return false; }
+    await onRefresh();
+    setShowNuevoPeriodo(false);
+    return true;
+  }
+
+  async function guardarFactura(form) {
+    const existente = detalle?.facturas?.find(f=>f.tipo==="factura");
+    const payload = {
+      periodo_id: periodoAbierto, tipo: "factura",
+      numero: form.numero || null,
+      fecha_emision: form.fecha_emision || null,
+      importe_gravado: parseFloat(form.importe_gravado)||0,
+      importe_exento: parseFloat(form.importe_exento)||0,
+      iva: parseFloat(form.iva)||0,
+      importe_total: parseFloat(form.importe_total)||0,
+      notas: form.notas || "",
+    };
+    const { error } = existente
+      ? await supabase.from("crm_facturas").update(payload).eq("id", existente.id)
+      : await supabase.from("crm_facturas").insert(payload);
+    if (error) { alert("Error al guardar factura: " + error.message); return; }
+    setShowFactura(false);
+    await refrescarDetalle();
+  }
+
+  async function registrarCobro(form) {
+    const { error } = await supabase.from("crm_cobros").insert({
+      periodo_id: periodoAbierto,
+      obra_social_id: periodo?.obra_social_id || null,
+      fecha: form.fecha, importe: parseFloat(form.importe)||0,
+      medio: form.medio || null, origen: "manual", notas: form.notas || "",
+    });
+    if (error) { alert("Error al registrar cobro: " + error.message); return; }
+    setShowCobro(false);
+    await refrescarDetalle();
+  }
+
+  async function subirCabeceraPDF(e) {
+    const file = e.target.files?.[0];
+    if (!file || !periodoAbierto) return;
+    setImportandoPdf(true);
+    try {
+      const r = await parseCabeceraOSDE(file);
+      if (!r.ok) {
+        alert("No se pudo leer el PDF como Cabecera de Liquidación. Completá la factura a mano.");
+      } else {
+        await supabase.from("crm_documentos_liquidacion").insert({
+          periodo_id: periodoAbierto, tipo: "cabecera",
+          datos_extraidos: r, notas: `PDF trámite ${r.tramite}`,
+        });
+        setFacturaPrellenada({
+          numero: "", fecha_emision: "",
+          importe_gravado: r.gravado||0, importe_exento: r.exento||0,
+          iva: r.iva||0, importe_total: r.total||0, notas: `Trámite ${r.tramite}`,
+        });
+        setShowFactura(true);
+        await refrescarDetalle();
+      }
+    } catch (err) {
+      alert("No se pudo leer el PDF: " + err.message);
+    }
+    setImportandoPdf(false);
+    if (pdfRef.current) pdfRef.current.value = "";
+  }
+
+  const [facturaPrellenada, setFacturaPrellenada] = useState(null);
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {["todos","OSDE","MEDIFE","PARTICULAR"].map(id=>(
+            <button key={id} onClick={()=>setFiltroOS(id)}
+              style={{...S.btn(filtroOS===id?"#4338ca":"#e2e8f0",12),padding:"7px 16px"}}>
+              {id==="todos"?"Todos":id}
+            </button>
+          ))}
+        </div>
+        <button onClick={()=>setShowNuevoPeriodo(true)} style={S.btn("#4338ca")}>＋ Nuevo período</button>
+      </div>
+
+      {ordenados.length===0 && (
+        <Card style={{textAlign:"center",padding:"3rem",color:"#94a3b8"}}>No hay períodos cargados todavía.</Card>
+      )}
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,marginBottom:20}}>
+        {ordenados.map(p=>{
+          const info = ESTADO_INFO[p.estado] || {label:p.estado,color:"#94a3b8"};
+          const pendiente = (p.importe_facturado||0) - (p.importe_cobrado||0);
+          return (
+            <Card key={p.id} style={{cursor:"pointer",border:periodoAbierto===p.id?"2px solid #4338ca":"1px solid #dbeafe"}}
+              onClick={()=>abrirPeriodo(p.id)}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                <Badge color={nombreOS(p.obra_social_id)==="OSDE"?"#4338ca":nombreOS(p.obra_social_id)==="MEDIFE"?"#7c3aed":"#059669"}>{nombreOS(p.obra_social_id)}</Badge>
+                <span style={{color:info.color,fontSize:11,fontWeight:700}}>{info.label}</span>
+              </div>
+              <div style={{color:"#1e293b",fontWeight:700,fontSize:13,marginBottom:8}}>{p.etiqueta}</div>
+              <div style={{color:"#64748b",fontSize:11,marginBottom:4}}>Facturado</div>
+              <div style={{color:"#1e293b",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:15,marginBottom:6}}>{fp(p.importe_facturado)}</div>
+              {p.importe_facturado>0 && (
+                <>
+                  <div style={{color:"#64748b",fontSize:11,marginBottom:4}}>Pendiente de cobro</div>
+                  <div style={{color:pendiente>0?"#d97706":"#059669",fontFamily:"'DM Mono',monospace",fontWeight:700,fontSize:14}}>{fp(pendiente)}</div>
+                </>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* DETALLE DEL PERÍODO */}
+      {periodo && (
+        <Card style={{marginBottom:20,borderLeft:"3px solid #4338ca"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
+            <div style={{color:"#1e293b",fontWeight:800,fontSize:15}}>{periodo.etiqueta}</div>
+            <button onClick={()=>setPeriodoAbierto(null)} style={{...S.btn("#e2e8f0",11)}}>✕ Cerrar</button>
+          </div>
+
+          {cargandoDetalle ? <div style={{color:"#94a3b8",padding:20}}>Cargando…</div> : (
+            <>
+              {/* Documentos */}
+              {nombreOS(periodo.obra_social_id)==="OSDE" && (
+                <div style={{marginBottom:16}}>
+                  <div style={{color:"#64748b",fontSize:11,fontWeight:700,letterSpacing:1,marginBottom:8}}>DOCUMENTOS</div>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+                    {detalle?.documentos?.filter(d=>d.tipo==="cabecera").length>0
+                      ? <Badge color="#059669">✓ Cabecera cargada</Badge>
+                      : <Badge color="#94a3b8">Sin Cabecera</Badge>}
+                    {detalle?.documentos?.filter(d=>d.tipo==="detalle_movimiento").length>0
+                      ? <Badge color="#059669">✓ Detalle cargado</Badge>
+                      : <Badge color="#94a3b8">Sin Detalle</Badge>}
+                    <label style={{display:"inline-flex",alignItems:"center",gap:6,background:"#7c3aed",color:"white",padding:"6px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700}}>
+                      {importandoPdf ? "⏳ Leyendo..." : "📄 Subir Cabecera (PDF)"}
+                      <input ref={pdfRef} type="file" accept=".pdf" style={{display:"none"}} onChange={subirCabeceraPDF} disabled={importandoPdf}/>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Factura */}
+              <div style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <div style={{color:"#64748b",fontSize:11,fontWeight:700,letterSpacing:1}}>FACTURA</div>
+                  <button onClick={()=>{setFacturaPrellenada(detalle?.facturas?.find(f=>f.tipo==="factura")||null); setShowFactura(true);}}
+                    style={{...S.btn("#4338ca",11)}}>
+                    {detalle?.facturas?.length>0 ? "✏️ Editar factura" : "＋ Cargar factura"}
+                  </button>
+                </div>
+                {detalle?.facturas?.filter(f=>f.tipo==="factura").map(f=>(
+                  <div key={f.id} style={{fontSize:12,color:"#475569"}}>
+                    {f.numero && <>N° <strong>{f.numero}</strong> · </>}
+                    {f.fecha_emision && <>Emitida {f.fecha_emision} · </>}
+                    Gravado {fp(f.importe_gravado)} · Exento {fp(f.importe_exento)} · IVA {fp(f.iva)} ·
+                    <strong> Total {fp(f.importe_total)}</strong>
+                  </div>
+                ))}
+                {(!detalle?.facturas || detalle.facturas.length===0) && <div style={{color:"#94a3b8",fontSize:12}}>Sin factura cargada todavía.</div>}
+              </div>
+
+              {/* Cobros */}
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <div style={{color:"#64748b",fontSize:11,fontWeight:700,letterSpacing:1}}>COBROS REGISTRADOS</div>
+                  <button onClick={()=>setShowCobro(true)} style={{...S.btn("#059669",11)}}>＋ Registrar cobro</button>
+                </div>
+                {detalle?.cobros?.length>0 ? detalle.cobros.map(c=>(
+                  <div key={c.id} style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#475569",padding:"6px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    <span>{c.fecha} {c.medio && `· ${c.medio}`} {c.notas && `· ${c.notas}`}</span>
+                    <span style={{color:"#059669",fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{fp(c.importe)}</span>
+                  </div>
+                )) : <div style={{color:"#94a3b8",fontSize:12}}>Sin cobros registrados todavía.</div>}
+              </div>
+            </>
+          )}
+        </Card>
+      )}
+
+      {showNuevoPeriodo && (
+        <FormNuevoPeriodo obrasSociales={obrasSociales} onGuardar={crearPeriodo} onCancelar={()=>setShowNuevoPeriodo(false)}/>
+      )}
+      {showFactura && (
+        <FormFactura inicial={facturaPrellenada} onGuardar={guardarFactura} onCancelar={()=>setShowFactura(false)}/>
+      )}
+      {showCobro && (
+        <FormCobro onGuardar={registrarCobro} onCancelar={()=>setShowCobro(false)}/>
+      )}
+    </div>
+  );
+}
+
+function FormNuevoPeriodo({obrasSociales, onGuardar, onCancelar}) {
+  const [form,setForm] = useState({obra_social_id: obrasSociales[0]?.id||"", fecha_desde:"", fecha_hasta:"", etiqueta:""});
+  const [guardando,setGuardando] = useState(false);
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(10,20,40,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50}}>
+      <Card style={{width:420,maxWidth:"95vw"}}>
+        <div style={{color:"#1e293b",fontWeight:800,fontSize:15,marginBottom:16}}>＋ Nuevo período</div>
+        <div style={{marginBottom:12}}><label style={S.label}>Obra social</label>
+          <select style={S.input} value={form.obra_social_id} onChange={e=>setForm(f=>({...f,obra_social_id:e.target.value}))}>
+            {obrasSociales.map(o=><option key={o.id} value={o.id}>{o.nombre}</option>)}
+          </select>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div><label style={S.label}>Desde</label><input type="date" style={S.input} value={form.fecha_desde} onChange={e=>setForm(f=>({...f,fecha_desde:e.target.value}))}/></div>
+          <div><label style={S.label}>Hasta</label><input type="date" style={S.input} value={form.fecha_hasta} onChange={e=>setForm(f=>({...f,fecha_hasta:e.target.value}))}/></div>
+        </div>
+        <div style={{marginBottom:16}}><label style={S.label}>Etiqueta (opcional)</label>
+          <input style={S.input} value={form.etiqueta} onChange={e=>setForm(f=>({...f,etiqueta:e.target.value}))} placeholder="Se arma sola si la dejás vacía"/></div>
+        <div style={{display:"flex",gap:10}}>
+          <button disabled={guardando||!form.obra_social_id||!form.fecha_desde||!form.fecha_hasta}
+            onClick={async()=>{setGuardando(true); await onGuardar(form); setGuardando(false);}}
+            style={S.btn("#4338ca")}>{guardando?"Guardando...":"Guardar"}</button>
+          <button onClick={onCancelar} style={S.btn("#e2e8f0")}>Cancelar</button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function FormFactura({inicial, onGuardar, onCancelar}) {
+  const [form,setForm] = useState(inicial || {numero:"",fecha_emision:"",importe_gravado:0,importe_exento:0,iva:0,importe_total:0,notas:""});
+  const [guardando,setGuardando] = useState(false);
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(10,20,40,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50}}>
+      <Card style={{width:460,maxWidth:"95vw",maxHeight:"90vh",overflowY:"auto"}}>
+        <div style={{color:"#1e293b",fontWeight:800,fontSize:15,marginBottom:16}}>Factura del período</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div><label style={S.label}>N° Factura</label><input style={S.input} value={form.numero} onChange={e=>setForm(f=>({...f,numero:e.target.value}))} placeholder="0003-00000075"/></div>
+          <div><label style={S.label}>Fecha emisión</label><input type="date" style={S.input} value={form.fecha_emision} onChange={e=>setForm(f=>({...f,fecha_emision:e.target.value}))}/></div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div><label style={S.label}>Gravado</label><input type="number" style={S.input} value={form.importe_gravado} onChange={e=>setForm(f=>({...f,importe_gravado:e.target.value}))}/></div>
+          <div><label style={S.label}>Exento</label><input type="number" style={S.input} value={form.importe_exento} onChange={e=>setForm(f=>({...f,importe_exento:e.target.value}))}/></div>
+          <div><label style={S.label}>IVA</label><input type="number" style={S.input} value={form.iva} onChange={e=>setForm(f=>({...f,iva:e.target.value}))}/></div>
+          <div><label style={S.label}>Total</label><input type="number" style={S.input} value={form.importe_total} onChange={e=>setForm(f=>({...f,importe_total:e.target.value}))}/></div>
+        </div>
+        <div style={{marginBottom:16}}><label style={S.label}>Notas</label><input style={S.input} value={form.notas} onChange={e=>setForm(f=>({...f,notas:e.target.value}))}/></div>
+        <div style={{display:"flex",gap:10}}>
+          <button disabled={guardando} onClick={async()=>{setGuardando(true); await onGuardar(form); setGuardando(false);}} style={S.btn("#4338ca")}>{guardando?"Guardando...":"Guardar factura"}</button>
+          <button onClick={onCancelar} style={S.btn("#e2e8f0")}>Cancelar</button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function FormCobro({onGuardar, onCancelar}) {
+  const [form,setForm] = useState({fecha:new Date().toISOString().slice(0,10), importe:0, medio:"Transferencia", notas:""});
+  const [guardando,setGuardando] = useState(false);
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(10,20,40,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50}}>
+      <Card style={{width:420,maxWidth:"95vw"}}>
+        <div style={{color:"#1e293b",fontWeight:800,fontSize:15,marginBottom:16}}>＋ Registrar cobro</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div><label style={S.label}>Fecha</label><input type="date" style={S.input} value={form.fecha} onChange={e=>setForm(f=>({...f,fecha:e.target.value}))}/></div>
+          <div><label style={S.label}>Importe</label><input type="number" style={S.input} value={form.importe} onChange={e=>setForm(f=>({...f,importe:e.target.value}))}/></div>
+        </div>
+        <div style={{marginBottom:12}}><label style={S.label}>Medio</label>
+          <select style={S.input} value={form.medio} onChange={e=>setForm(f=>({...f,medio:e.target.value}))}>
+            {["Transferencia","Banco","MercadoPago","Efectivo","Otro"].map(m=><option key={m}>{m}</option>)}
+          </select>
+        </div>
+        <div style={{marginBottom:16}}><label style={S.label}>Notas</label><input style={S.input} value={form.notas} onChange={e=>setForm(f=>({...f,notas:e.target.value}))}/></div>
+        <div style={{display:"flex",gap:10}}>
+          <button disabled={guardando||!form.importe} onClick={async()=>{setGuardando(true); await onGuardar(form); setGuardando(false);}} style={S.btn("#059669")}>{guardando?"Guardando...":"Registrar"}</button>
+          <button onClick={onCancelar} style={S.btn("#e2e8f0")}>Cancelar</button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─── VISTA: COBROS (OSDE + MEDIFE + PARTICULARES) — versión vieja, ya sin usar ──
 function ViewCobros({registros}) {
   const [tab, setTab] = useState("osde");
   return (
@@ -3412,7 +3732,7 @@ export default function RavaCRM({ user, onLogout }) {
           {view==="dashboard"    && <ViewDashboard registros={registros} precios={precios} periodos={periodos} obrasSociales={obrasSociales} onVerFicha={setFichaProf}/>}
           {view==="liquidacion"  && <ViewLiquidacion registros={registros} setRegistros={setRegistros} onRefresh={cargarDesdeSupabase} precios={precios}/>}
           {view==="ingresos"     && <ViewIngresos registros={registros}/>}
-          {view==="cobros"       && <ViewCobros registros={registros}/>}
+          {view==="cobros"       && <ViewCobrosV2 periodos={periodos} obrasSociales={obrasSociales} onRefresh={cargarCobros}/>}
           {view==="controldiario"&& <ViewControlDiarioAdmin registros={registros} setRegistros={setRegistros} onRefresh={cargarDesdeSupabase}/>}
           {view==="conciliacion" && <ViewConciliacion registros={registros}/>}
           {view==="precios"       && <ViewPrecios onPreciosUpdate={cargarPrecios}/>}
