@@ -40,16 +40,16 @@ ON CONFLICT (obra_social_id, codigo) DO NOTHING;
 -- 3. Períodos OSDE con datos confirmados
 -- ───────────────────────────────────────────────────────────
 INSERT INTO crm_periodos_liquidacion (obra_social_id, fecha_desde, fecha_hasta, etiqueta, fecha_cobro_estimada, notas)
-SELECT id, '2026-01-15', '2026-02-12', 'OSDE 15/01–12/02 (trámite 5805582132)',
-       '2026-03-09', 'Migrado desde crm_tramites_osde original'
+SELECT id, '2026-01-15'::date, '2026-02-12'::date, 'OSDE 15/01–12/02 (trámite 5805582132)',
+       '2026-03-09'::date, 'Migrado desde crm_tramites_osde original'
 FROM crm_obras_sociales WHERE nombre = 'OSDE'
 UNION ALL
-SELECT id, '2026-05-16', '2026-06-15', 'OSDE 16/05–15/06 (trámite 5805998423)',
-       '2026-07-09', 'Cabecera + Factura confirmadas por PDF real'
+SELECT id, '2026-05-16'::date, '2026-06-15'::date, 'OSDE 16/05–15/06 (trámite 5805998423)',
+       '2026-07-09'::date, 'Cabecera + Factura confirmadas por PDF real'
 FROM crm_obras_sociales WHERE nombre = 'OSDE'
 UNION ALL
-SELECT id, '2026-06-16', '2026-07-15', 'OSDE 16/06–15/07 (trámite 5806107471)',
-       '2026-08-09', 'Cabecera confirmada por PDF — factura AÚN NO emitida'
+SELECT id, '2026-06-16'::date, '2026-07-15'::date, 'OSDE 16/06–15/07 (trámite 5806107471)',
+       '2026-08-09'::date, 'Cabecera confirmada por PDF — factura AÚN NO emitida'
 FROM crm_obras_sociales WHERE nombre = 'OSDE'
 ON CONFLICT (obra_social_id, fecha_desde, fecha_hasta) DO NOTHING;
 
@@ -57,7 +57,7 @@ ON CONFLICT (obra_social_id, fecha_desde, fecha_hasta) DO NOTHING;
 -- 4. Período MEDIFE junio
 -- ───────────────────────────────────────────────────────────
 INSERT INTO crm_periodos_liquidacion (obra_social_id, fecha_desde, fecha_hasta, etiqueta, fecha_cobro_estimada, notas)
-SELECT id, '2026-06-01', '2026-06-30', 'MEDIFE Junio 2026', '2026-08-14', 'Factura 0003-00000093'
+SELECT id, '2026-06-01'::date, '2026-06-30'::date, 'MEDIFE Junio 2026', '2026-08-14'::date, 'Factura 0003-00000093'
 FROM crm_obras_sociales WHERE nombre = 'MEDIFE'
 ON CONFLICT (obra_social_id, fecha_desde, fecha_hasta) DO NOTHING;
 
@@ -93,13 +93,13 @@ WHERE o.nombre = 'OSDE' AND p.fecha_desde = '2026-06-16';
 -- 6. Facturas emitidas
 -- ───────────────────────────────────────────────────────────
 INSERT INTO crm_facturas (periodo_id, numero, fecha_emision, importe_exento, importe_gravado, iva, importe_total, detalle, notas)
-SELECT p.id, '0003-00000075', '2026-07-02', 10280693.17, 6169998.12, 647849.80, 17098541.09,
+SELECT p.id, '0003-00000075', '2026-07-02'::date, 10280693.17, 6169998.12, 647849.80, 17098541.09,
   '{"afiliados_obligatorios_exento":10280693.17,"afiliados_directos_gravado":6169998.12}'::jsonb,
   'Trámite 5805998423 — emitida un mes después de lo que hubiera correspondido, corrimiento de IVA de un mes'
 FROM crm_periodos_liquidacion p JOIN crm_obras_sociales o ON o.id = p.obra_social_id
 WHERE o.nombre = 'OSDE' AND p.fecha_desde = '2026-05-16'
 UNION ALL
-SELECT p.id, '0003-00000093', '2026-07-05', 283475.00, 195500.00, 20527.50, 499502.50,
+SELECT p.id, '0003-00000093', '2026-07-05'::date, 283475.00, 195500.00, 20527.50, 499502.50,
   '{"pacientes_obligatorios":29,"pacientes_directos":20,"precio_unitario":9775}'::jsonb,
   'Período 01/06 al 30/06/2026'
 FROM crm_periodos_liquidacion p JOIN crm_obras_sociales o ON o.id = p.obra_social_id
