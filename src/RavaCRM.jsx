@@ -396,8 +396,6 @@ function ViewCobrosOSDE({registros}) {
   const [guardando, setGuardando] = useState(false);
   const [tab, setTab] = useState("tramites");
   const [mesFiltro, setMesFiltro] = useState("todos");
-  const [importandoXls, setImportandoXls] = useState(false);
-  const xlsRefOsde = useRef(null);
   const [importandoPdf, setImportandoPdf] = useState(false);
   const pdfRefOsde = useRef(null);
 
@@ -446,68 +444,6 @@ function ViewCobrosOSDE({registros}) {
     setForm({...FORM_EMPTY, mesImpacto: mesFiltro !== "todos" ? mesFiltro : getMesActual()});
     setEditando(null);
     setShowForm(true);
-  }
-
-  function parseNumXls(v) {
-    return parseFloat(String(v ?? "").replace(/[^0-9,.-]/g,"").replace(",",".")) || 0;
-  }
-
-  async function importarExcel(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImportandoXls(true);
-    try {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type:"array", cellDates: true });
-      const sheetName = wb.SheetNames.find(n => /resumen|cabecera|summary/i.test(n)) || wb.SheetNames[0];
-      const ws = wb.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
-
-      const found = {
-        tramiteNro:"", fechaEmision:"", periodoDesde:"", periodoHasta:"",
-        gravado:0, exento:0, iva:0, totalConIVA:0,
-        prestaciones:{ FKT:{visitas:0,liquidado:0}, RPG:{visitas:0,liquidado:0}, DRENAJE:{visitas:0,liquidado:0} }
-      };
-
-      rows.forEach(row => {
-        const cells = row.map(c => String(c ?? "").trim());
-        const c0 = cells[0]?.toLowerCase() || "";
-        if (/trámite|tramite|nro|número|numero/.test(c0)) found.tramiteNro = found.tramiteNro || cells[1] || "";
-        if (/emis/.test(c0)) found.fechaEmision = found.fechaEmision || cells[1] || "";
-        if (/desde|from|inicio/.test(c0)) found.periodoDesde = found.periodoDesde || cells[1] || "";
-        if (/hasta|to|fin/.test(c0)) found.periodoHasta = found.periodoHasta || cells[1] || "";
-        if (/gravado/.test(c0)) found.gravado = found.gravado || parseNumXls(cells[1]);
-        if (/exento/.test(c0)) found.exento = found.exento || parseNumXls(cells[1]);
-        if (/^iva|i\.v\.a/.test(c0)) found.iva = found.iva || parseNumXls(cells[1]);
-        if (/total.*(con|c\/).?iva/i.test(cells.join(" "))) found.totalConIVA = found.totalConIVA || parseNumXls(cells.find((v,i)=>i>0&&parseNumXls(v)>0)||"0");
-        ["FKT","RPG","DRENAJE"].forEach(p => {
-          const idx = cells.findIndex(c => c.toUpperCase() === p);
-          if (idx >= 0) {
-            const nums = cells.slice(idx+1, idx+5).map(parseNumXls).filter(n => n > 0);
-            if (nums.length >= 2) found.prestaciones[p] = { visitas: Math.round(nums[0]), liquidado: nums[1] };
-            else if (nums.length === 1) found.prestaciones[p].visitas = Math.round(nums[0]);
-          }
-        });
-      });
-
-      setForm(f => ({
-        ...f,
-        tramiteNro:     found.tramiteNro     || f.tramiteNro,
-        fechaEmision:   found.fechaEmision   || f.fechaEmision,
-        periodoDesde:   found.periodoDesde   || f.periodoDesde,
-        periodoHasta:   found.periodoHasta   || f.periodoHasta,
-        importeGravado: found.gravado        || f.importeGravado,
-        importeExento:  found.exento         || f.importeExento,
-        iva:            found.iva            || f.iva,
-        totalConIVA:    found.totalConIVA    || f.totalConIVA,
-        prestaciones:   found.prestaciones,
-      }));
-      alert(`✅ Datos importados de "${file.name}".\nRevisá y completá lo que falte antes de guardar.`);
-    } catch (err) {
-      alert("No se pudo leer el Excel: " + err.message);
-    }
-    setImportandoXls(false);
-    if (xlsRefOsde.current) xlsRefOsde.current.value = "";
   }
 
   async function importarPdfCabecera(e) {
@@ -861,16 +797,6 @@ function ViewCobrosOSDE({registros}) {
               <label style={{display:"inline-flex",alignItems:"center",gap:8,background:"#7c3aed",color:"white",padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700}}>
                 {importandoPdf ? "⏳ Leyendo..." : "📄 Seleccionar PDF"}
                 <input ref={pdfRefOsde} type="file" accept=".pdf" style={{display:"none"}} onChange={importarPdfCabecera} disabled={importandoPdf}/>
-              </label>
-            </div>
-
-            {/* Importar desde Excel */}
-            <div style={{background:"#f0f9ff",border:"1px dashed #7dd3fc",borderRadius:10,padding:"12px 16px",marginBottom:18}}>
-              <div style={{fontSize:12,color:"#0369a1",fontWeight:700,marginBottom:4}}>📥 Importar desde Excel del Generador de Liquidación OSDE</div>
-              <div style={{fontSize:11,color:"#0284c7",marginBottom:10}}>Seleccioná el Excel para auto-completar el formulario. Revisá los datos antes de guardar.</div>
-              <label style={{display:"inline-flex",alignItems:"center",gap:8,background:"#0ea5e9",color:"white",padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700}}>
-                {importandoXls ? "⏳ Leyendo..." : "📂 Seleccionar Excel"}
-                <input ref={xlsRefOsde} type="file" accept=".xlsx,.xls" style={{display:"none"}} onChange={importarExcel} disabled={importandoXls}/>
               </label>
             </div>
 
